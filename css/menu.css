@@ -1,0 +1,298 @@
+/* ==========================================================================
+   Menu principal: herói com botão de partida, painel do piloto (conta-giros)
+   e o painel de módulos.
+   ========================================================================== */
+
+.menu {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: calc(var(--altura-barra) + 18px) 16px 40px;
+}
+
+@media (min-width: 720px) { .menu { padding-inline: 28px; } }
+
+.menu__topo { display: grid; gap: 26px; align-items: center; }
+@media (min-width: 960px) { .menu__topo { grid-template-columns: 1.15fr 1fr; gap: 40px; } }
+
+/* ---------- Herói ---------- */
+
+.menu__heroi { display: flex; flex-direction: column; gap: 16px; }
+
+.menu__selo {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--a1) 50%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--a1) 12%, transparent);
+  color: var(--a1);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.menu__titulo {
+  font-size: clamp(5rem, 19vw, 11rem);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 0.8;
+  letter-spacing: 0.02em;
+}
+.menu__titulo span {
+  display: inline-block;
+  padding-right: 0.1em;
+  color: var(--texto);
+  transform: skewX(-8deg);
+  /* Adesivo de corrida: sombras sólidas deslocadas nas cores do tema */
+  text-shadow: 0.04em 0.04em 0 var(--a1), 0.08em 0.08em 0 var(--a2), 0.12em 0.12em 0 var(--a3);
+}
+
+.menu__faixas { width: min(420px, 80%); height: 10px; border-radius: 3px; transform: skewX(-30deg); }
+
+.menu__subtitulo { max-width: 40ch; font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--texto-suave); }
+
+.menu__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 22px; margin-top: 6px; }
+.menu__dica { max-width: 20ch; font-size: 0.9rem; color: var(--texto-suave); }
+
+/* Botão de partida (Engine Start/Stop) */
+.partida {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 136px;
+  height: 136px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #3a3f3c, #121513 70%);
+  box-shadow: 0 0 0 6px #1b201d, 0 0 0 8px #3a403c, 0 16px 34px -10px rgba(0, 0, 0, 0.9), inset 0 2px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 0.12s ease-out;
+}
+.partida:active { transform: scale(0.95); }
+.partida__anel {
+  position: absolute;
+  inset: 10px;
+  border: 3px solid var(--destaque);
+  border-radius: 50%;
+  box-shadow: 0 0 18px var(--destaque), inset 0 0 14px color-mix(in srgb, var(--destaque) 60%, transparent);
+  animation: anel-respirar 2.2s ease-in-out infinite;
+}
+.partida__texto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--fonte-titulo);
+  font-size: 1.7rem;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  color: #fff;
+}
+.partida__texto small { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.3em; color: var(--texto-suave); }
+.partida:hover .partida__anel { animation-duration: 0.9s; }
+
+@keyframes anel-respirar {
+  50% { opacity: 0.45; box-shadow: 0 0 6px var(--destaque), inset 0 0 6px color-mix(in srgb, var(--destaque) 40%, transparent); }
+}
+
+/* ---------- Painel do piloto ---------- */
+
+.cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--linha-forte);
+  border-radius: 22px;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.cluster__giros { position: relative; width: min(300px, 100%); margin: 0 auto; }
+.giros { width: 100%; height: auto; color: var(--texto); }
+.giros__numero { font-family: var(--fonte-digital); font-size: 17px; font-weight: 600; fill: var(--texto); }
+.giros__unidade { font-family: var(--fonte-digital); font-size: 11px; fill: var(--texto-suave); letter-spacing: 0.1em; }
+.giros__ponteiro { transform: rotate(-120deg); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--a1) 70%, transparent)); }
+
+.cluster__nivel {
+  position: absolute;
+  left: 50%;
+  bottom: 13%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  line-height: 1;
+}
+.cluster__rotulo { font-family: var(--fonte-digital); font-size: 0.68rem; letter-spacing: 0.2em; color: var(--texto-suave); }
+.cluster__nivel strong { font-family: var(--fonte-digital); font-size: 2.4rem; color: var(--a1); }
+.cluster__nivel span:last-child { margin-top: 3px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+
+.cluster__barra-xp { height: 8px; overflow: hidden; border-radius: 4px; background: rgba(255, 255, 255, 0.1); }
+.cluster__barra-xp span { display: block; width: var(--p, 0%); min-width: 8px; height: 100%; background: var(--faixas); transition: width 0.8s var(--mola); }
+
+.cluster__leituras {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+.cluster__leituras div {
+  padding: 8px 12px;
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+}
+.cluster__leituras dt { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--texto-suave); }
+.cluster__leituras dd { margin: 0; font-family: var(--fonte-digital); font-size: 1.25rem; font-weight: 600; color: var(--texto); font-variant-numeric: tabular-nums; }
+
+.cluster__medalhas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.medalha {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--cor) 60%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cor) 22%, transparent);
+  color: var(--cor);
+  transition: transform 0.25s var(--mola);
+}
+.medalha:hover { transform: translateY(-2px) scale(1.06); }
+.medalha--senna { box-shadow: inset 0 -3px 0 var(--a1); }
+.medalha--bloqueada { border-style: dashed; background: rgba(255, 255, 255, 0.03); color: var(--texto-suave); opacity: 0.7; }
+.medalha .icone { width: 20px; height: 20px; }
+.cluster__detalhe { min-height: 1.4em; font-size: 0.85rem; color: var(--texto-suave); }
+
+/* ---------- Divisor quadriculado ---------- */
+
+.menu__divisor {
+  height: 22px;
+  margin: 42px -16px 30px;
+  background-size: 22px 22px;
+  opacity: 0.85;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+}
+
+/* ---------- Módulos (teclas de painel) ---------- */
+
+.modulos__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.modulos__cabecalho h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-style: italic; text-transform: uppercase; }
+
+.modulos__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 14px;
+}
+
+.modulo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 200px;
+  padding: 18px 18px 16px;
+  overflow: hidden;
+  border: 1px solid var(--linha-forte);
+  border-radius: 18px;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--cor) 16%, transparent), transparent 55%),
+    linear-gradient(180deg, #1a201d, #0d110f);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  box-shadow: 0 6px 0 #050706, 0 18px 30px -14px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: modulo-entrar 0.6s var(--mola) both;
+  animation-delay: calc(var(--ordem) * 70ms + 0.15s);
+  transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, border-color 0.2s;
+}
+.modulo::after {
+  content: '';
+  position: absolute;
+  inset: auto -20% -60% auto;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--cor) 30%, transparent), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.modulo:hover { border-color: var(--cor); }
+.modulo:hover::after { opacity: 1; }
+.modulo:active { transform: translateY(5px); box-shadow: 0 1px 0 #050706, 0 6px 14px -10px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+
+@media (min-width: 620px) { .modulo--destaque { grid-column: span 2; } }
+.modulo--destaque .modulo__nome { font-size: clamp(2rem, 4vw, 2.8rem); }
+
+.modulo__led {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffb020;
+  box-shadow: 0 0 8px #ffb020;
+  opacity: 0.6;
+}
+.modulo__led--verde { background: #3cff6b; box-shadow: 0 0 10px #3cff6b; opacity: 1; animation: led-piscar 3s ease-in-out infinite; }
+@keyframes led-piscar { 50% { opacity: 0.5; } }
+
+.modulo__icone {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--cor) 20%, #0b0f0d);
+  color: var(--cor);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cor) 50%, transparent);
+}
+.modulo__icone .icone { width: 28px; height: 28px; }
+.modulo__nome { font-family: var(--fonte-titulo); font-size: 1.7rem; font-weight: 900; font-style: italic; line-height: 1; letter-spacing: 0.03em; text-transform: uppercase; }
+.modulo__desc { font-size: 0.95rem; color: var(--texto-suave); }
+.modulo__rodape {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  font-family: var(--fonte-titulo);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cor);
+}
+.modulo--fechado { opacity: 0.72; }
+.modulo--fechado .modulo__rodape { color: var(--texto-suave); }
+.modulo--tremer { animation: tremer 0.4s ease; }
+
+@keyframes modulo-entrar { from { opacity: 0; transform: translateY(24px) scale(0.96); } }
+@keyframes tremer { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+/* ---------- Rodapé com a dedicatória ---------- */
+
+.menu__rodape { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 54px; text-align: center; }
+.menu__rodape .faixas { width: 160px; border-radius: 3px; transform: skewX(-30deg); }
+.menu__dedicatoria { max-width: 52ch; color: var(--texto-suave); }
+.menu__dedicatoria strong { color: var(--a1); }
+.menu__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.menu__links .chip { text-decoration: none; }

@@ -1,0 +1,93 @@
+/* ==========================================================================
+   Temas do Ronco. O tema vive em <html data-tema="...">.
+   --a1, --a2, --a3: as três cores de assinatura (faixas, luzes, destaques)
+   --destaque: cor de foco e controles ativos (pode ser trocada pelo piloto)
+   ========================================================================== */
+
+:root,
+[data-tema='brasil'] {
+  --fundo: #04130b;
+  --fundo-2: #0b2a17;
+  --painel: #0b1a12;
+  --painel-2: #071009;
+  --texto: #f6fbf4;
+  --texto-suave: #b9d4c2;
+  --a1: #ffd60a;
+  --a2: #00c853;
+  --a3: #1e6bff;
+  --destaque: #ffd60a;
+  --destaque-texto: #0b0d0a;
+  --brilho-fundo: rgba(0, 200, 83, 0.22);
+  --brilho-fundo-2: rgba(30, 107, 255, 0.22);
+  color-scheme: dark;
+}
+
+[data-tema='noturna'] {
+  --fundo: #04050d;
+  --fundo-2: #0b1030;
+  --painel: #0a0d22;
+  --painel-2: #05060f;
+  --texto: #f2f6ff;
+  --texto-suave: #b0bde0;
+  --a1: #22e4ff;
+  --a2: #ff2e97;
+  --a3: #ffb020;
+  --destaque: #22e4ff;
+  --destaque-texto: #04050d;
+  --brilho-fundo: rgba(255, 46, 151, 0.2);
+  --brilho-fundo-2: rgba(34, 228, 255, 0.18);
+}
+
+[data-tema='anos80'] {
+  --fundo: #170827;
+  --fundo-2: #2c0d4a;
+  --painel: #200a37;
+  --painel-2: #12051f;
+  --texto: #fff4fb;
+  --texto-suave: #e2bfe0;
+  --a1: #ff6ec7;
+  --a2: #ffd166;
+  --a3: #00e5ff;
+  --destaque: #ff6ec7;
+  --destaque-texto: #170827;
+  --brilho-fundo: rgba(255, 110, 199, 0.25);
+  --brilho-fundo-2: rgba(255, 209, 102, 0.18);
+}
+
+[data-tema='carbono'] {
+  --fundo: #0a0b0d;
+  --fundo-2: #17191d;
+  --painel: #121417;
+  --painel-2: #08090a;
+  --texto: #f4f4f4;
+  --texto-suave: #b4b8bf;
+  --a1: #e10600;
+  --a2: #f2f2f2;
+  --a3: #8a9099;
+  --destaque: #e10600;
+  --destaque-texto: #ffffff;
+  --brilho-fundo: rgba(225, 6, 0, 0.18);
+  --brilho-fundo-2: rgba(255, 255, 255, 0.06);
+}
+
+[data-tema='rua'] {
+  --fundo: #0b0b10;
+  --fundo-2: #17172a;
+  --painel: #11111c;
+  --painel-2: #08080d;
+  --texto: #f6f6ff;
+  --texto-suave: #c0c0d8;
+  --a1: #a3ff12;
+  --a2: #ff7a18;
+  --a3: #8b5cff;
+  --destaque: #a3ff12;
+  --destaque-texto: #0b0b10;
+  --brilho-fundo: rgba(139, 92, 255, 0.22);
+  --brilho-fundo-2: rgba(163, 255, 18, 0.12);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

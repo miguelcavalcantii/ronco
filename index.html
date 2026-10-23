@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="brasil">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#04130b">
+  <meta name="description" content="Ronco: estrada infinita em 3D, garagem, sons de motor, clima e uma homenagem a Ayrton Senna.">
+  <title>Ronco · gire a chave</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2304130b'/%3E%3Cpath d='M12 44a20 20 0 0 1 40 0' fill='none' stroke='%23ffd60a' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M32 44l12-14' stroke='%2300c853' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='44' r='5' fill='%231e6bff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:ital,wght@0,600;0,800;0,900;1,800;1,900&family=Titillium+Web:wght@400;600;700&family=Chakra+Petch:wght@500;600;700&display=swap">
+  <script>
+    // Aplica o tema salvo antes da primeira pintura (evita piscar no tema padrão)
+    try {
+      const p = JSON.parse(localStorage.getItem('ronco:preferencias') || '{}');
+      if (p.tema) document.documentElement.dataset.tema = p.tema;
+      if (p.destaque) document.documentElement.style.setProperty('--destaque', p.destaque);
+    } catch (e) { /* sem armazenamento: fica o tema padrão */ }
+  </script>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+  </script>
+  <link rel="stylesheet" href="css/temas.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/menu.css">
+  <link rel="stylesheet" href="css/configuracoes.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body data-tela="menu">
+  <a class="pular" href="#modulos">Pular para os módulos</a>
+
+  <header class="barra">
+    <a class="marca" href="#/" aria-label="Ronco, início">
+      <span class="marca__nome">RONCO</span>
+      <span class="faixas" aria-hidden="true"></span>
+    </a>
+    <a class="barra__voltar pilula" href="#/" aria-label="Voltar ao menu (Esc)">
+      <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      <span>Box</span>
+    </a>
+    <span class="barra__titulo" id="titulo-secao"></span>
+    <div class="barra__direita">
+      <div class="chip-nivel pilula" id="chip-nivel">
+        <span data-nv>NV 1</span>
+        <span class="chip-nivel__barra"><span></span></span>
+      </div>
+      <button type="button" class="botao-icone pilula" id="botao-config" aria-label="Configurações" title="Configurações" aria-haspopup="dialog"></button>
+      <div class="controle-som pilula">
+        <button type="button" class="botao-icone" id="botao-mudo" aria-pressed="false" aria-label="Silenciar"></button>
+        <input type="range" class="deslizador" id="volume" min="0" max="100" value="75" aria-label="Volume geral">
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="tela-menu" class="menu"></div>
+    <section id="tela-secao" class="secao" hidden aria-labelledby="titulo-secao">
+      <div id="palco-secao" class="secao__palco" tabindex="-1"></div>
+    </section>
+  </main>
+
+  <div id="avisos" class="avisos" aria-live="polite"></div>
+
+  <div class="cortina" id="cortina" aria-hidden="true">
+    <div class="cortina__titulo"><span data-cortina-texto></span><div class="faixas"></div></div>
+  </div>
+
+  <div class="intro" id="intro" hidden>
+    <button type="button" class="intro__chave" data-intro-ligar>
+      <span class="intro__anel" aria-hidden="true"></span>
+      <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2"/></svg>
+      <strong>Gire a chave</strong>
+      <small>Toque para dar a partida (com som)</small>
+    </button>
+    <button type="button" class="intro__silencio" data-intro-mudo>Entrar sem som</button>
+  </div>
+
+  <noscript><p style="padding:100px 20px;text-align:center">O Ronco precisa de JavaScript ligado.</p></noscript>
+</body>
+</html>
