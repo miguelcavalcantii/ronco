@@ -5,8 +5,8 @@
  * sem criar nem destruir objetos durante o jogo.
  */
 import * as THREE from 'three';
-import { PASSO, MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610231834';
-import { geradorComSemente } from '../nucleo/util.js?v=202610231834';
+import { PASSO, MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610231912';
+import { geradorComSemente } from '../nucleo/util.js?v=202610231912';
 
 export const COMPRIMENTO = 100;
 const SEGMENTOS = COMPRIMENTO / PASSO; // 50 fatias por pedaço

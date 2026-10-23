@@ -6,8 +6,8 @@
  * Isso deixa o carro sempre "preso" à pista (não cai do mapa), com curvas,
  * aderência limitada (derrapa se passar do limite), câmbio e batidas na mureta.
  */
-import { clamp } from '../nucleo/util.js?v=202610231834';
-import { MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610231834';
+import { clamp } from '../nucleo/util.js?v=202610231912';
+import { MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610231912';
 
 const G = 9.81;
 const LIMITE_LATERAL = MEIA_LARGURA + ACOSTAMENTO - 0.75; // centro do carro encosta nos balizadores

@@ -3,27 +3,27 @@
  * o carro, a física, as câmeras, os controles e o som, e desenha o painel (HUD).
  */
 import * as THREE from 'three';
-import { icone } from '../../nucleo/icones.js?v=202610231834';
-import { carregarEstilo, clamp } from '../../nucleo/util.js?v=202610231834';
-import { luzesDeLargada } from '../../nucleo/ui.js?v=202610231834';
-import { Tracado, MEIA_LARGURA } from '../../jogo/tracado.js?v=202610231834';
-import { criarRuido } from '../../jogo/ruido.js?v=202610231834';
-import { Estrada } from '../../jogo/estrada.js?v=202610231834';
-import { obterPaisagem } from '../../jogo/paisagens.js?v=202610231834';
-import { garagem } from '../../jogo/garagemDados.js?v=202610231834';
-import { criarCarro } from '../../jogo/modelosReais.js?v=202610231834';
-import { criarFisica } from '../../jogo/fisica.js?v=202610231834';
-import { criarControleCamera } from '../../jogo/cameras.js?v=202610231834';
-import { criarEntrada } from '../../jogo/entrada.js?v=202610231834';
-import { criarSomDoCarro } from '../../jogo/motorSom.js?v=202610231834';
-import { criarMundo } from '../../jogo/mundo.js?v=202610231834';
-import { criarControleQualidade } from '../../jogo/qualidade.js?v=202610231834';
+import { icone } from '../../nucleo/icones.js?v=202610231912';
+import { carregarEstilo, clamp } from '../../nucleo/util.js?v=202610231912';
+import { luzesDeLargada } from '../../nucleo/ui.js?v=202610231912';
+import { Tracado, MEIA_LARGURA } from '../../jogo/tracado.js?v=202610231912';
+import { criarRuido } from '../../jogo/ruido.js?v=202610231912';
+import { Estrada } from '../../jogo/estrada.js?v=202610231912';
+import { obterPaisagem } from '../../jogo/paisagens.js?v=202610231912';
+import { garagem } from '../../jogo/garagemDados.js?v=202610231912';
+import { criarCarro } from '../../jogo/modelosReais.js?v=202610231912';
+import { criarFisica } from '../../jogo/fisica.js?v=202610231912';
+import { criarControleCamera } from '../../jogo/cameras.js?v=202610231912';
+import { criarEntrada } from '../../jogo/entrada.js?v=202610231912';
+import { criarSomDoCarro } from '../../jogo/motorSom.js?v=202610231912';
+import { criarMundo } from '../../jogo/mundo.js?v=202610231912';
+import { criarControleQualidade } from '../../jogo/qualidade.js?v=202610231912';
 
 const DISTANCIA_REBASE = 2500; // origem flutuante: recentra o mundo a cada 2,5 km
 const NOMES_QUALIDADE = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto', ultra: 'Ultra' };
 
 export async function montar(raiz, { audio, preferencias, progresso, avisar, configuracoes, voltar }) {
-  await carregarEstilo(new URL('../../../css/secoes/dirigir.css?v=202610231834', import.meta.url));
+  await carregarEstilo(new URL('../../../css/secoes/dirigir.css?v=202610231912', import.meta.url));
 
   raiz.innerHTML = `
     <div class="jogo" data-jogo>
@@ -36,7 +36,11 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
         </div>
         <span class="hud__fps" data-hud-fps hidden></span>
         <div class="painel carbono" aria-hidden="true">
-          <div class="painel__leds" data-leds>${'<i></i>'.repeat(10)}</div>
+          <div class="painel__topo">
+            <span class="painel__seta" data-seta-indicador="esquerda">${icone('voltar')}</span>
+            <div class="painel__leds" data-leds>${'<i></i>'.repeat(10)}</div>
+            <span class="painel__seta" data-seta-indicador="direita">${icone('seta')}</span>
+          </div>
           <svg class="painel__giros" viewBox="0 0 200 120">
             <path class="painel__trilho" d="M20 110 A80 80 0 0 1 180 110" pathLength="100"/>
             <path class="painel__vermelho" d="M20 110 A80 80 0 0 1 180 110" pathLength="100"/>
@@ -54,6 +58,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
 
       <div class="controles-toque" data-controles-toque>
         <div class="controles-toque__lado">
+          <button type="button" class="tecla-toque tecla-toque--mini" data-controle="buzina" aria-label="Buzina">BI</button>
           <button type="button" class="tecla-toque" data-controle="esquerda" aria-label="Virar à esquerda">${icone('voltar')}</button>
           <button type="button" class="tecla-toque" data-controle="direita" aria-label="Virar à direita">${icone('seta')}</button>
         </div>
@@ -132,7 +137,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
 
   let som = null;
   const garantirSom = () => {
-    if (!som && audio.ativo) som = criarSomDoCarro(audio, carroDados.motor);
+    if (!som && audio.ativo) som = criarSomDoCarro(audio, carroDados.motor, { rpmMax: carroDados.rpmMax });
   };
 
   /* ---------- HUD ---------- */
@@ -245,6 +250,39 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
     });
   }
 
+  /* ---------- Setas (pisca-pisca) ---------- */
+
+  let seta = null; // 'esquerda' | 'direita' | null
+  let faseSeta = 0;
+  let setaAcesa = false;
+  let tempoSeta = 0;
+  const indicadores = { esquerda: $('[data-seta-indicador="esquerda"]'), direita: $('[data-seta-indicador="direita"]') };
+  function alternarSeta(lado) {
+    seta = seta === lado ? null : lado;
+    faseSeta = 0;
+    tempoSeta = 0;
+    setaAcesa = false;
+    if (!seta) acenderSeta(false);
+  }
+  function acenderSeta(acesa) {
+    setaAcesa = acesa;
+    carro.setas(acesa && seta === 'esquerda', acesa && seta === 'direita');
+    indicadores.esquerda.classList.toggle('aceso', acesa && seta === 'esquerda');
+    indicadores.direita.classList.toggle('aceso', acesa && seta === 'direita');
+    if (seta || !acesa) som?.seta(acesa);
+  }
+  function piscarSetas(dt) {
+    if (!seta) return;
+    tempoSeta += dt;
+    // Desliga sozinha depois de 12 s (esquecer a seta ligada é coisa de motorista distraído)
+    if (tempoSeta > 12) { seta = null; acenderSeta(false); return; }
+    faseSeta -= dt;
+    if (faseSeta <= 0) {
+      acenderSeta(!setaAcesa);
+      faseSeta = 0.36;
+    }
+  }
+
   function recomecar() {
     fisica.reiniciar();
     distanciaSessao = 0;
@@ -296,7 +334,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
         mostrarAviso(`Câmera: ${novo.nome}`);
         audio.tocar('alternar');
       }
-      if (acao === 'buzina') audio.tocar('buzina');
+      if (acao === 'setaEsquerda' || acao === 'setaDireita') alternarSeta(acao === 'setaEsquerda' ? 'esquerda' : 'direita');
       if (acao === 'esconderPainel') document.body.classList.toggle('interface-oculta');
     }
     comando.subir = comando.acoes.has('marchaAcima');
@@ -366,6 +404,8 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
       limitador: e.limitador,
       foraDaPista: e.foraDaPista && Math.abs(e.x) > MEIA_LARGURA,
     });
+    som?.buzina(comando.buzina);
+    piscarSetas(dt);
 
     // Estatísticas e XP
     const metros = Math.max(0, e.s - sAntes);
@@ -393,7 +433,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
 
   mundo.renderizador.setAnimationLoop(quadro);
   // Para testes: ?depurar no endereço expõe as peças do jogo no console
-  if (new URLSearchParams(location.search).has('depurar')) window.ronco = { fisica, estrada, tracado, mundo, qualidade: () => qualidade, cameras };
+  if (new URLSearchParams(location.search).has('depurar')) window.ronco = { fisica, estrada, tracado, mundo, qualidade: () => qualidade, cameras, som: () => som, carro };
   largar();
 
   return {

@@ -2,15 +2,15 @@
  * Ponto de entrada do Ronco: liga o áudio, a barra, o menu, as configurações,
  * a tela de abertura e o roteador por hash (#/ = menu, #/s/<id> = seção).
  */
-import { audio } from './nucleo/audio.js?v=202610231834';
-import { preferencias } from './nucleo/preferencias.js?v=202610231834';
-import { progresso } from './nucleo/progresso.js?v=202610231834';
-import { icone } from './nucleo/icones.js?v=202610231834';
-import { avisar, ligarControlesSom, ligarChipNivel } from './nucleo/ui.js?v=202610231834';
-import { movimentoReduzido } from './nucleo/util.js?v=202610231834';
-import { criarConfiguracoes } from './nucleo/configuracoes.js?v=202610231834';
-import { criarMenu } from './menu/menu.js?v=202610231834';
-import { obterSecao } from './secoes/registro.js?v=202610231834';
+import { audio } from './nucleo/audio.js?v=202610231912';
+import { preferencias } from './nucleo/preferencias.js?v=202610231912';
+import { progresso } from './nucleo/progresso.js?v=202610231912';
+import { icone } from './nucleo/icones.js?v=202610231912';
+import { avisar, ligarControlesSom, ligarChipNivel } from './nucleo/ui.js?v=202610231912';
+import { movimentoReduzido } from './nucleo/util.js?v=202610231912';
+import { criarConfiguracoes } from './nucleo/configuracoes.js?v=202610231912';
+import { criarMenu } from './menu/menu.js?v=202610231912';
+import { obterSecao } from './secoes/registro.js?v=202610231912';
 
 const telaMenu = document.getElementById('tela-menu');
 const telaSecao = document.getElementById('tela-secao');

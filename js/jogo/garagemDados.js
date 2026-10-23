@@ -2,9 +2,9 @@
  * O que fica guardado da garagem: o carro escolhido e os ajustes de cada carro
  * (pintura, rodas, vidros, altura). Salvo no navegador (localStorage).
  */
-import { ler, gravar } from '../nucleo/armazenamento.js?v=202610231834';
-import { CARROS, obterCarro } from './carros.js?v=202610231834';
-import { ajustesPadrao } from './carro3d.js?v=202610231834';
+import { ler, gravar } from '../nucleo/armazenamento.js?v=202610231912';
+import { CARROS, obterCarro } from './carros.js?v=202610231912';
+import { ajustesPadrao } from './carro3d.js?v=202610231912';
 
 const CHAVE = 'garagem';
 const estado = { carro: 'ronco-gt', ajustes: {}, ...ler(CHAVE, {}) };

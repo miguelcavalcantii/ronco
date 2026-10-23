@@ -14,7 +14,16 @@
 - **Qualidade automática** (`js/jogo/qualidade.js`): mede o FPS a cada segundo; desce um
   nível depois de 2 segundos abaixo de 48 FPS e só tenta subir (até o Alto) depois de 8
   segundos acima de 58 e 40 s sem ter descido.
-- **Sons sintetizados** com Web Audio: nenhum arquivo de áudio precisa ser baixado.
+- **Motores sintetizados, não gravados** (`js/jogo/motorSom.js`). Gravações CC0 de motor
+  costumam ser de um giro só; para acompanhar o giro seria preciso um banco com várias faixas
+  de rotação por motor e mistura entre elas, e quase não existe isso livre. Em vez disso, um
+  AudioWorklet gera cada explosão dos cilindros (pulso curto que ressoa no escapamento). A ordem,
+  a força e o espaçamento irregular das explosões dão o caráter: o "lope" do V8 (sub-harmônico
+  forte, medido), o liso do 6 em linha, o agudo do V10/V12, o 3 cilindros do 208.
+  Turbo tem assobio e válvula de alívio; giro alto sem acelerar dá estalos no escapamento.
+- **Níveis medidos offline:** cada perfil foi renderizado em OfflineAudioContext (marcha lenta,
+  meio e pé no fundo) e ganhou um `nivel` para todos soarem parecidos, com um limitador por carro
+  (picos ficam abaixo de 0,85). A marcha lenta fica 6 a 15 dB abaixo do pé no fundo.
 - **Sem marcas:** os carros são estilizados e não usam logotipos (marcas registradas).
   Na seção Legado não serão usadas fotos, o logotipo oficial, o desenho original do
   capacete nem marcas de patrocinadores: só cores, textos, números e ilustrações próprias.

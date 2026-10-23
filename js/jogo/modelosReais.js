@@ -10,7 +10,7 @@
  *                    "pintura": ["paint", "body"], "rodas": ["wheel"] }
  */
 import * as THREE from 'three';
-import { criarCarro3d, FORMAS, ajustesPadrao } from './carro3d.js?v=202610231834';
+import { criarCarro3d, FORMAS, ajustesPadrao } from './carro3d.js?v=202610231912';
 
 const BASE = new URL('../../assets/modelos/', import.meta.url);
 const DECODIFICADOR_DRACO = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/';
@@ -140,6 +140,7 @@ function montarReal(carro, cena, info, { ambiente = null, ajustes = ajustesPadra
     aplicarAjustes,
     frear(ligado) { for (const m of lanternas) m.emissiveIntensity = ligado ? 3 : 1; },
     farois() {},
+    setas() {},
     definirSombras(ligado) { cena.traverse((o) => { if (o.isMesh) o.castShadow = ligado; }); },
     destruir() {
       cena.traverse((o) => {

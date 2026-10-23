@@ -205,6 +205,8 @@ export function criarCarro3d(carro, { ambiente = null, ajustes = ajustesPadrao(c
     interior: new THREE.MeshStandardMaterial({ color: '#1d1f22', roughness: 0.9 }),
     farol: new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#fff6d8', emissiveIntensity: 1.2 }),
     lanterna: new THREE.MeshStandardMaterial({ color: '#5a0000', emissive: '#ff1a1a', emissiveIntensity: 0.6 }),
+    setaEsquerda: new THREE.MeshStandardMaterial({ color: '#6b3a00', emissive: '#ff9a1a', emissiveIntensity: 0 }),
+    setaDireita: new THREE.MeshStandardMaterial({ color: '#6b3a00', emissive: '#ff9a1a', emissiveIntensity: 0 }),
     cromado: new THREE.MeshStandardMaterial({ color: '#d7dbe0', metalness: 1, roughness: 0.2, envMap: ambiente }),
     pneu: new THREE.MeshStandardMaterial({ color: '#141414', roughness: 0.88 }),
     aro: new THREE.MeshStandardMaterial({ color: ajustes.corRoda, metalness: 0.9, roughness: 0.25, envMap: ambiente }),
@@ -307,6 +309,11 @@ export function criarCarro3d(carro, { ambiente = null, ajustes = ajustesPadrao(c
     frear(ligado) {
       materiais.lanterna.emissiveIntensity = ligado ? 3 : 0.6;
     },
+    /** Pisca das setas: acende/apaga cada lado. */
+    setas(esquerda, direita) {
+      materiais.setaEsquerda.emissiveIntensity = esquerda ? 2.5 : 0;
+      materiais.setaDireita.emissiveIntensity = direita ? 2.5 : 0;
+    },
     /** Intensidade dos faróis (0 = apagados), para a noite. */
     farois(intensidade) {
       materiais.farol.emissiveIntensity = intensidade;
@@ -388,7 +395,16 @@ function montarCarroceria(carroceria, forma, m) {
     e.position.set(x, 0.36, tras - 0.04);
     return e;
   });
-  carroceria.add(corpo, cabine, teto, interior, grade, saia, ...farois, ...lanternas, faixa, difusor, ...escapes);
+  // Setas nos quatro cantos (esquerda do motorista = +x local)
+  const setas = [];
+  for (const [lado, material] of [[1, m.setaEsquerda], [-1, m.setaDireita]]) {
+    for (const [z, y] of [[frente - 0.14, Math.min(0.6, alturaFarol)], [tras - 0.03, alturaTraseira - 0.3]]) {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.07, 0.07), material);
+      s.position.set(lado * (L / 2 - 0.13), y, z);
+      setas.push(s);
+    }
+  }
+  carroceria.add(corpo, cabine, teto, interior, grade, saia, ...farois, ...lanternas, faixa, difusor, ...escapes, ...setas);
 
   if (forma.aerofolio) {
     const { z, y, largura, baixo } = forma.aerofolio;

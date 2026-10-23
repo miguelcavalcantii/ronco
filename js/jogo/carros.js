@@ -52,7 +52,7 @@ export const CARROS = [
   {
     id: 'audi-r8', nome: 'Audi R8 V10', inspiracao: 'Supercarro de motor central', categoria: 'super',
     descricao: 'V10 aspirado logo atrás dos bancos e tração integral.',
-    forma: 'supercarro', cor: '#8a9099', motor: 'v12', vmax: 324, zeroCem: 3.4, estabilidade: 0.86, rpmMax: 8500, rpmLenta: 1000, marchas: SETE, roda: 'multi',
+    forma: 'supercarro', cor: '#8a9099', motor: 'v10', vmax: 324, zeroCem: 3.4, estabilidade: 0.86, rpmMax: 8500, rpmLenta: 1000, marchas: SETE, roda: 'multi',
   },
   {
     id: 'ferrari-f8', nome: 'Ferrari F8 Tributo', inspiracao: 'Berlineta V8', categoria: 'super',
@@ -76,8 +76,8 @@ export const CARROS = [
   },
   {
     id: 'peugeot-208', nome: 'Peugeot 208 Style', inspiracao: 'Hatch compacto (cinza)', categoria: 'rua',
-    descricao: 'Compacto do dia a dia, 1.0 turbo, econômico e esperto no trânsito.',
-    forma: 'hatch', cor: '#6e7378', motor: 'popular', vmax: 190, zeroCem: 9.6, estabilidade: 0.7, rpmMax: 6200, rpmLenta: 850, marchas: SEIS, roda: 'aero', corRoda: '#4a4f55',
+    descricao: 'Compacto do dia a dia, 1.0 turbo de três cilindros, econômico e esperto no trânsito.',
+    forma: 'hatch', cor: '#6e7378', motor: 'tres', vmax: 190, zeroCem: 9.6, estabilidade: 0.7, rpmMax: 6200, rpmLenta: 850, marchas: SEIS, roda: 'aero', corRoda: '#4a4f55',
   },
   {
     id: 'toyota-corolla', nome: 'Toyota Corolla', inspiracao: 'Sedã médio', categoria: 'rua',

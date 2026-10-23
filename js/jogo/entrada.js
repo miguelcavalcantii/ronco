@@ -3,7 +3,7 @@
  * videogame (Gamepad API, padrão "standard") e celular (botões na tela ou inclinar).
  * `ler()` devolve o estado do quadro: eixos contínuos e ações de "um toque".
  */
-import { clamp } from '../nucleo/util.js?v=202610231834';
+import { clamp } from '../nucleo/util.js?v=202610231912';
 
 const ACOES_TOQUE = ['marchaAcima', 'marchaAbaixo', 'camera', 'buzina', 'farol', 'setaEsquerda', 'setaDireita', 'radio', 'pausar', 'esconderPainel', 'foto'];
 
@@ -14,7 +14,7 @@ const ACOES_CONTROLE = { marchaAcima: BOTOES.rb, marchaAbaixo: BOTOES.lb, camera
 export function criarEntrada({ preferencias, alvoToque }) {
   const apertadas = new Set();
   const disparos = new Set(); // ações de um toque esperando leitura
-  const toque = { acelerar: 0, frear: 0, esquerda: 0, direita: 0, freioDeMao: false };
+  const toque = { acelerar: 0, frear: 0, esquerda: 0, direita: 0, freioDeMao: false, buzina: false };
   const botoesAnteriores = new Map();
   let inclinacao = null; // −1..1 quando o modo inclinar está ativo
   let usouControle = false;
@@ -37,7 +37,7 @@ export function criarEntrada({ preferencias, alvoToque }) {
   }
   function aoPerderFoco() {
     apertadas.clear();
-    Object.assign(toque, { acelerar: 0, frear: 0, esquerda: 0, direita: 0, freioDeMao: false });
+    Object.assign(toque, { acelerar: 0, frear: 0, esquerda: 0, direita: 0, freioDeMao: false, buzina: false });
   }
   window.addEventListener('keydown', aoApertar);
   window.addEventListener('keyup', aoSoltar);
@@ -56,6 +56,7 @@ export function criarEntrada({ preferencias, alvoToque }) {
     const controle = botao.dataset.controle;
     ponteiros.set(e.pointerId, { controle, botao });
     botao.classList.add('ativo');
+    if (controle === 'buzina') toque.buzina = true; // buzina toca enquanto o dedo estiver em cima
     if (ACOES_TOQUE.includes(controle)) disparos.add(controle);
     else if (controle === 'freioDeMao') toque.freioDeMao = true;
     else toque[controle] = 1;
@@ -68,7 +69,7 @@ export function criarEntrada({ preferencias, alvoToque }) {
     ponteiros.delete(e.pointerId);
     if ([...ponteiros.values()].some((q) => q.controle === p.controle)) return;
     p.botao.classList.remove('ativo');
-    if (p.controle === 'freioDeMao') toque.freioDeMao = false;
+    if (p.controle === 'freioDeMao' || p.controle === 'buzina') toque[p.controle] = false;
     else if (p.controle in toque) toque[p.controle] = 0;
   }
   alvoToque?.addEventListener('pointerdown', aoTocar);
@@ -109,6 +110,7 @@ export function criarEntrada({ preferencias, alvoToque }) {
         frear: b(BOTOES.lt).value,
         direcao: direcao + (b(BOTOES.direita).pressed ? 1 : 0) - (b(BOTOES.esquerda).pressed ? 1 : 0),
         freioDeMao: b(BOTOES.a).pressed || b(BOTOES.x).pressed,
+        buzina: b(BOTOES.b).pressed,
       };
       for (const [acao, i] of Object.entries(ACOES_CONTROLE)) {
         const chave = `${pad.index}:${i}`;
@@ -122,7 +124,7 @@ export function criarEntrada({ preferencias, alvoToque }) {
     return null;
   }
 
-  const estado = { acelerar: 0, frear: 0, direcao: 0, freioDeMao: false, acoes: new Set() };
+  const estado = { acelerar: 0, frear: 0, direcao: 0, freioDeMao: false, buzina: false, acoes: new Set() };
 
   return {
     get usouControle() { return usouControle; },
@@ -138,6 +140,7 @@ export function criarEntrada({ preferencias, alvoToque }) {
       estado.frear = clamp(Math.max(teclado.frear, toque.frear, pad?.frear ?? 0), 0, 1);
       estado.direcao = clamp(teclado.direcao + direcaoToque + (pad?.direcao ?? 0), -1, 1);
       estado.freioDeMao = ativa('freioDeMao') || toque.freioDeMao || Boolean(pad?.freioDeMao);
+      estado.buzina = ativa('buzina') || toque.buzina || Boolean(pad?.buzina);
       estado.acoes = new Set(disparos);
       disparos.clear();
       return estado;
