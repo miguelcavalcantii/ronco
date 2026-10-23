@@ -2,8 +2,8 @@
  * Peças de interface compartilhadas: avisos, controles de som da barra,
  * selo de nível, preenchimento dos deslizadores e as luzes de largada.
  */
-import { icone } from './icones.js?v=202610231819';
-import { movimentoReduzido } from './util.js?v=202610231819';
+import { icone } from './icones.js?v=202610231834';
+import { movimentoReduzido } from './util.js?v=202610231834';
 
 const pilha = document.getElementById('avisos');
 

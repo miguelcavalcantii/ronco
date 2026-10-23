@@ -61,7 +61,10 @@ export function criarControleCamera(camera, { pontoNaEstrada }) {
       camera.lookAt(alvoSuave);
       fovAlvo = 60 + Math.min(16, velocidade * 0.2);
     } else if (modo === 'capo' || modo === 'primeira') {
-      local.set(modo === 'capo' ? 0 : -0.36, modo === 'capo' ? 1.22 : 1.08, modo === 'capo' ? 0.9 : -0.2);
+      // Cockpit: banco do motorista (lado esquerdo = +x local); o F1 informa o próprio ponto
+      const [cx, cy, cz] = carro.cockpit ?? [0.36, 1.08, -0.2];
+      if (modo === 'capo') local.set(0, (carro.capo ?? 1.22), 0.9);
+      else local.set(cx, cy, cz);
       camera.position.copy(local.applyMatrix4(g.matrixWorld));
       camera.up.copy(cima);
       alvo.copy(camera.position).addScaledVector(frente, 20);

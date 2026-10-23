@@ -13,5 +13,6 @@
 ## Modelos 3D e sons
 
 Até esta etapa, todos os carros, cenários e sons são feitos em código pelo próprio app
-(nada de terceiros). Quando modelos reais forem adicionados na etapa da garagem, cada um
-será listado aqui com autor, link e licença.
+(nada de terceiros). O estúdio da garagem usa o `RoomEnvironment` do three.js (MIT).
+Quando modelos reais forem colocados em `assets/modelos/` (ver MODELOS.md), liste cada um aqui
+com nome, autor, link e licença.

@@ -3,27 +3,27 @@
  * o carro, a física, as câmeras, os controles e o som, e desenha o painel (HUD).
  */
 import * as THREE from 'three';
-import { icone } from '../../nucleo/icones.js?v=202610231819';
-import { carregarEstilo, clamp } from '../../nucleo/util.js?v=202610231819';
-import { luzesDeLargada } from '../../nucleo/ui.js?v=202610231819';
-import { Tracado, MEIA_LARGURA } from '../../jogo/tracado.js?v=202610231819';
-import { criarRuido } from '../../jogo/ruido.js?v=202610231819';
-import { Estrada } from '../../jogo/estrada.js?v=202610231819';
-import { obterPaisagem } from '../../jogo/paisagens.js?v=202610231819';
-import { obterCarro } from '../../jogo/carros.js?v=202610231819';
-import { criarCarro3d } from '../../jogo/carro3d.js?v=202610231819';
-import { criarFisica } from '../../jogo/fisica.js?v=202610231819';
-import { criarControleCamera } from '../../jogo/cameras.js?v=202610231819';
-import { criarEntrada } from '../../jogo/entrada.js?v=202610231819';
-import { criarSomDoCarro } from '../../jogo/motorSom.js?v=202610231819';
-import { criarMundo } from '../../jogo/mundo.js?v=202610231819';
-import { criarControleQualidade } from '../../jogo/qualidade.js?v=202610231819';
+import { icone } from '../../nucleo/icones.js?v=202610231834';
+import { carregarEstilo, clamp } from '../../nucleo/util.js?v=202610231834';
+import { luzesDeLargada } from '../../nucleo/ui.js?v=202610231834';
+import { Tracado, MEIA_LARGURA } from '../../jogo/tracado.js?v=202610231834';
+import { criarRuido } from '../../jogo/ruido.js?v=202610231834';
+import { Estrada } from '../../jogo/estrada.js?v=202610231834';
+import { obterPaisagem } from '../../jogo/paisagens.js?v=202610231834';
+import { garagem } from '../../jogo/garagemDados.js?v=202610231834';
+import { criarCarro } from '../../jogo/modelosReais.js?v=202610231834';
+import { criarFisica } from '../../jogo/fisica.js?v=202610231834';
+import { criarControleCamera } from '../../jogo/cameras.js?v=202610231834';
+import { criarEntrada } from '../../jogo/entrada.js?v=202610231834';
+import { criarSomDoCarro } from '../../jogo/motorSom.js?v=202610231834';
+import { criarMundo } from '../../jogo/mundo.js?v=202610231834';
+import { criarControleQualidade } from '../../jogo/qualidade.js?v=202610231834';
 
 const DISTANCIA_REBASE = 2500; // origem flutuante: recentra o mundo a cada 2,5 km
 const NOMES_QUALIDADE = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto', ultra: 'Ultra' };
 
 export async function montar(raiz, { audio, preferencias, progresso, avisar, configuracoes, voltar }) {
-  await carregarEstilo(new URL('../../../css/secoes/dirigir.css?v=202610231819', import.meta.url));
+  await carregarEstilo(new URL('../../../css/secoes/dirigir.css?v=202610231834', import.meta.url));
 
   raiz.innerHTML = `
     <div class="jogo" data-jogo>
@@ -90,7 +90,8 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
   /* ---------- Montagem do mundo ---------- */
 
   const paisagem = obterPaisagem('serra');
-  const carroDados = obterCarro('ronco-gt');
+  const carroDados = garagem.carro;
+  const ajustes = garagem.ajustesDe(carroDados.id);
   let qualidade;
   const aoMudarQualidade = (nivel) => {
     mundo.aplicarPreset(qualidade.preset);
@@ -106,10 +107,10 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
   tracado.relevo = paisagem.tracado.relevo;
   tracado.sinuosidade = paisagem.tracado.sinuosidade;
   const estrada = new Estrada({ cena: mundo.cena, tracado, ruido, paisagem, renderizador: mundo.renderizador, preset: qualidade.preset });
-  const carro = criarCarro3d(carroDados, { ambiente: mundo.ambiente });
+  const carro = await criarCarro(carroDados, { ambiente: mundo.ambiente, ajustes });
   carro.definirSombras(qualidade.preset.sombras);
   mundo.cena.add(carro.grupo);
-  const fisica = criarFisica(carroDados, { raioRoda: carro.raioRoda });
+  const fisica = criarFisica(carroDados, { raioRoda: carro.raioRoda, entreEixos: carro.entreEixos, altura: ajustes.altura });
   fisica.definirCambio(preferencias.get('cambio'));
   const e = fisica.estado;
 
@@ -278,9 +279,10 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
   let metrosXp = 0;
 
   function quadro(agora) {
-    const dtReal = ultimoTempo ? (agora - ultimoTempo) / 1000 : 1 / 60;
+    let dtReal = ultimoTempo ? (agora - ultimoTempo) / 1000 : 1 / 60;
     ultimoTempo = agora;
     if (pausado) return;
+    if (!(dtReal > 0) || !Number.isFinite(dtReal)) dtReal = 1 / 60; // tempo inválido (troca de aba, relógio)
     const dt = Math.min(dtReal, 1 / 30);
     qualidade.medir(dtReal);
     if (!hud.fps.hidden) escrever('fps', hud.fps, `${Math.round(qualidade.fps)} FPS · ${NOMES_QUALIDADE[qualidade.nivel]}`);
@@ -303,7 +305,13 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
     // Antes do "VAI!" o carro fica parado, mas dá para acelerar em ponto morto
     const sAntes = e.s;
     tracado.em(e.s, c);
+    const seguro = { ...e };
     const eventos = fisica.passo(dt, comando, { curvatura: c.curvatura, inclinacao: c.inclinacao, aderencia: 1 });
+    // Proteção: se algum número da física ficar inválido, volta ao último estado bom
+    if (![e.s, e.x, e.v, e.angulo, e.rpm, e.esterco].every(Number.isFinite)) {
+      console.warn('Física inválida neste quadro; estado restaurado.', { ...e }, comando);
+      Object.assign(e, seguro, { v: 0 });
+    }
     if (!largadaLiberada) {
       e.s = sAntes;
       e.v = 0;
@@ -333,7 +341,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
     for (const pivo of carro.pivos) pivo.rotation.y = -e.esterco;
     carro.frear(comando.frear > 0 && e.v > 0.5);
 
-    cameras.atualizar(dt, { grupo: carro.grupo, s: e.s, x: e.x, v: e.v });
+    cameras.atualizar(dt, { grupo: carro.grupo, s: e.s, x: e.x, v: e.v, cockpit: carro.cockpit, capo: carro.capo });
     estrada.atualizar(e.s);
     tracado.descartarAte(e.s - 300);
 

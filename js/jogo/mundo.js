@@ -4,7 +4,7 @@
  * O mapa de reflexo do carro é gerado a partir do próprio céu.
  */
 import * as THREE from 'three';
-import { criarRuido } from './ruido.js?v=202610231819';
+import { criarRuido } from './ruido.js?v=202610231834';
 
 const RAIO_CEU = 3200;
 const RAIO_MONTANHAS = 2300;

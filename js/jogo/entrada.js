@@ -3,7 +3,7 @@
  * videogame (Gamepad API, padrão "standard") e celular (botões na tela ou inclinar).
  * `ler()` devolve o estado do quadro: eixos contínuos e ações de "um toque".
  */
-import { clamp } from '../nucleo/util.js?v=202610231819';
+import { clamp } from '../nucleo/util.js?v=202610231834';
 
 const ACOES_TOQUE = ['marchaAcima', 'marchaAbaixo', 'camera', 'buzina', 'farol', 'setaEsquerda', 'setaDireita', 'radio', 'pausar', 'esconderPainel', 'foto'];
 

@@ -13,7 +13,7 @@ export const SECOES = [
     cor: 'var(--a1)',
     destaque: true,
     disponivel: true,
-    carregar: () => import('./dirigir/index.js?v=202610231819'),
+    carregar: () => import('./dirigir/index.js?v=202610231834'),
   },
   {
     id: 'garagem',
@@ -21,8 +21,8 @@ export const SECOES = [
     descricao: 'Escolha o carro, a pintura, as rodas e a suspensão.',
     icone: 'garagem',
     cor: 'var(--a2)',
-    disponivel: false,
-    carregar: () => import('./garagem/index.js?v=202610231819'),
+    disponivel: true,
+    carregar: () => import('./garagem/index.js?v=202610231834'),
   },
   {
     id: 'legado',
@@ -31,7 +31,7 @@ export const SECOES = [
     icone: 'capacete',
     cor: 'var(--a3)',
     disponivel: false,
-    carregar: () => import('./legado/index.js?v=202610231819'),
+    carregar: () => import('./legado/index.js?v=202610231834'),
   },
   {
     id: 'comparador',

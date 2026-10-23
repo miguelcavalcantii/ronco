@@ -3,10 +3,10 @@
  * piloto (conta-giros com leituras digitais e conquistas) e os módulos do app como
  * teclas de painel com LED. Os módulos vêm do registro central (js/secoes/registro.js).
  */
-import { SECOES } from '../secoes/registro.js?v=202610231819';
-import { CONQUISTAS } from '../nucleo/conquistas.js?v=202610231819';
-import { icone } from '../nucleo/icones.js?v=202610231819';
-import { movimentoReduzido } from '../nucleo/util.js?v=202610231819';
+import { SECOES } from '../secoes/registro.js?v=202610231834';
+import { CONQUISTAS } from '../nucleo/conquistas.js?v=202610231834';
+import { icone } from '../nucleo/icones.js?v=202610231834';
+import { movimentoReduzido } from '../nucleo/util.js?v=202610231834';
 
 const URL_DOPAMINA = 'https://miguelcavalcantii.github.io/dopamina/';
 const URL_INSTITUTO = 'https://institutoayrtonsenna.org.br/';

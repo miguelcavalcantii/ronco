@@ -6,15 +6,18 @@
  * Isso deixa o carro sempre "preso" à pista (não cai do mapa), com curvas,
  * aderência limitada (derrapa se passar do limite), câmbio e batidas na mureta.
  */
-import { clamp } from '../nucleo/util.js?v=202610231819';
-import { MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610231819';
-import { ENTRE_EIXOS } from './carro3d.js?v=202610231819';
+import { clamp } from '../nucleo/util.js?v=202610231834';
+import { MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610231834';
 
 const G = 9.81;
 const LIMITE_LATERAL = MEIA_LARGURA + ACOSTAMENTO - 0.75; // centro do carro encosta nos balizadores
 const TEMPO_TROCA = 0.2;
 
-export function criarFisica(carro, { raioRoda = 0.34 } = {}) {
+export function criarFisica(carro, { raioRoda = 0.34, entreEixos = 2.6, altura = 0 } = {}) {
+  const ENTRE_EIXOS = entreEixos;
+  const eletrico = carro.motor === 'eletrico';
+  // Rebaixado gruda um pouco mais; elevado, um pouco menos
+  const estabilidade = Math.min(0.99, carro.estabilidade - altura * 0.025);
   const vmax = carro.vmax / 3.6;
   const aceleracaoMax = (100 / 3.6 / carro.zeroCem) * 1.45;
   const ultima = carro.marchas[carro.marchas.length - 1];
@@ -42,6 +45,7 @@ export function criarFisica(carro, { raioRoda = 0.34 } = {}) {
   const rpmNaMarcha = (v, m) => (Math.abs(v) / (2 * Math.PI * raioRoda)) * 60 * carro.marchas[m] * diferencial;
   const torque = (rpm) => {
     const t = clamp(rpm / carro.rpmMax, 0, 1);
+    if (eletrico) return 1.15 - t * 0.35; // elétrico: força máxima desde o zero
     return 0.72 + 0.4 * Math.sin(Math.PI * Math.min(1, t * 1.05)); // curva "barriga" no meio do giro
   };
 
@@ -59,7 +63,7 @@ export function criarFisica(carro, { raioRoda = 0.34 } = {}) {
    */
   function passo(dt, entrada, pista) {
     const eventos = [];
-    const aderencia = (pista.aderencia ?? 1) * (0.82 + 0.42 * carro.estabilidade);
+    const aderencia = (pista.aderencia ?? 1) * (0.82 + 0.42 * estabilidade);
     e.foraDaPista = Math.abs(e.x) > MEIA_LARGURA - 0.3;
 
     /* ---------- Direção ---------- */
@@ -115,7 +119,7 @@ export function criarFisica(carro, { raioRoda = 0.34 } = {}) {
     const rpmRodas = rpmNaMarcha(e.v, marchaEf);
     // Embreagem patinando na saída: o giro sobe com o acelerador
     // (só em 1ª e ré; até as rodas alcançarem esse giro)
-    const rpmEmbreagem = e.marcha <= 0 ? carro.rpmLenta + entrada.acelerar * 2600 : 0;
+    const rpmEmbreagem = e.marcha <= 0 && !eletrico ? carro.rpmLenta + entrada.acelerar * 2600 : 0;
     const rpmAlvo = clamp(Math.max(rpmRodas, rpmEmbreagem, carro.rpmLenta), carro.rpmLenta, carro.rpmMax * 1.01);
     e.rpm += (rpmAlvo - e.rpm) * Math.min(1, dt * (e.trocando ? 10 : 14));
     e.limitador = e.rpm >= carro.rpmMax * 0.995 && entrada.acelerar > 0.5;
@@ -174,6 +178,7 @@ export function criarFisica(carro, { raioRoda = 0.34 } = {}) {
     get marchaTexto() {
       if (e.marcha === -1) return 'R';
       if (Math.abs(e.v) < 0.5 && e.marcha === 0) return 'N';
+      if (eletrico) return 'D';
       return String(e.marcha + 1);
     },
     /** Volta à faixa da direita, parado, no mesmo ponto da estrada. */

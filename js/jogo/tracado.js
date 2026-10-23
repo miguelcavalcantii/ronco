@@ -7,8 +7,8 @@
  * Rumo θ: frente = (sen θ, 0, cos θ); direita = (−cos θ, 0, sen θ).
  * Curvatura positiva vira para a direita (θ diminui).
  */
-import { clamp } from '../nucleo/util.js?v=202610231819';
-import { criarRuido } from './ruido.js?v=202610231819';
+import { clamp } from '../nucleo/util.js?v=202610231834';
+import { criarRuido } from './ruido.js?v=202610231834';
 
 export const PASSO = 2;
 export const MEIA_LARGURA = 7.2; // 4 faixas de 3,6 m

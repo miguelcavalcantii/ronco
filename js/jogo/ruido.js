@@ -2,7 +2,7 @@
  * Ruído suave (value noise) com semente, em 1D e 2D, e a soma de oitavas (fbm).
  * Usado para relevo, curvas da estrada e posição de árvores.
  */
-import { geradorComSemente } from '../nucleo/util.js?v=202610231819';
+import { geradorComSemente } from '../nucleo/util.js?v=202610231834';
 
 export function criarRuido(semente = 1) {
   const aleatorio = geradorComSemente(semente);

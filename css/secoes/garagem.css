@@ -1,0 +1,159 @@
+/* ==========================================================================
+   Garagem: lista de carros | palco 3D | ficha com números e personalização
+   ========================================================================== */
+
+.garagem {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 250px 1fr 360px;
+  grid-template-areas: 'lista palco ficha';
+  gap: 12px;
+  padding: calc(var(--altura-barra) + 6px) 12px 12px;
+  background: #0b0d0f;
+}
+
+.garagem__palco { position: relative; grid-area: palco; min-height: 0; overflow: hidden; border-radius: 20px; background: #0b0d0f; }
+.garagem__tela { width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.garagem__tela:active { cursor: grabbing; }
+.garagem__dica {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.garagem__dica .icone { width: 14px; height: 14px; }
+.garagem__navegar { position: absolute; bottom: 14px; left: 50%; display: flex; align-items: center; gap: 12px; transform: translateX(-50%); }
+.garagem__contador { min-width: 64px; font-family: var(--fonte-digital); font-size: 0.95rem; text-align: center; color: #fff; }
+
+/* ---------- Lista ---------- */
+
+.garagem__lista {
+  grid-area: lista;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 10px;
+  border: 1px solid var(--linha);
+  border-radius: 20px;
+  overscroll-behavior: contain;
+}
+.garagem__lista h2 { padding: 0 6px; font-size: 1.5rem; font-style: italic; text-transform: uppercase; }
+.garagem__lista h3 { margin: 14px 6px 6px; font-family: var(--fonte-texto); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-suave); }
+.garagem__lista ul { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.carro-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s var(--mola);
+}
+.carro-item:hover { background: rgba(255, 255, 255, 0.07); transform: translateX(3px); }
+.carro-item[aria-pressed='true'] { border-color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, transparent); }
+.carro-item__cor { flex: none; width: 14px; height: 28px; border-radius: 4px; background: var(--cor); transform: skewX(-14deg); }
+.carro-item strong { display: block; font-size: 0.92rem; line-height: 1.2; }
+.carro-item small { display: block; font-size: 0.74rem; color: var(--texto-suave); }
+
+/* ---------- Ficha ---------- */
+
+.garagem__ficha {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  grid-area: ficha;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--linha);
+  border-radius: 20px;
+  overscroll-behavior: contain;
+}
+.ficha__categoria { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--a1); }
+.ficha__topo h2 { margin: 4px 0 6px; font-size: clamp(1.7rem, 3vw, 2.3rem); font-style: italic; text-transform: uppercase; }
+.ficha__descricao { font-size: 0.92rem; color: var(--texto-suave); }
+.ficha__modelo { margin-top: 6px; font-size: 0.74rem; color: var(--texto-suave); opacity: 0.8; }
+
+.ficha__numeros { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.ficha__numeros > div { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 10px; }
+.ficha__numeros dt { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--texto-suave); }
+.ficha__numeros dd { margin: 0; font-size: 0.85rem; color: var(--texto-suave); }
+.ficha__numeros dd strong { font-family: var(--fonte-digital); font-size: 1.25rem; color: var(--texto); }
+.barra-nota { grid-column: 1 / -1; display: block; height: 8px; overflow: hidden; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
+.barra-nota i {
+  display: block;
+  width: calc(var(--n, 0) * 100%);
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--a2), var(--a1));
+  transition: width 0.6s var(--suave);
+}
+
+.ficha__motor { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+.ficha__motor .chip { margin-left: auto; }
+
+.ficha__abas { display: flex; gap: 2px; border-bottom: 1px solid var(--linha); }
+.ficha__abas button {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--texto-suave);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ficha__abas button[aria-selected='true'] { border-bottom-color: var(--destaque); color: var(--texto); }
+.ficha__painel { display: flex; flex-direction: column; gap: 12px; }
+.amostras { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.amostras .amostra { width: 32px; height: 32px; }
+.opcoes-linha { display: flex; flex-wrap: wrap; gap: 6px; }
+.regulagem { display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; }
+.regulagem .deslizador { width: 100%; }
+.ficha__nota { font-size: 0.82rem; color: var(--texto-suave); }
+
+.ficha__acoes { display: flex; align-items: center; gap: 10px; margin-top: auto; padding-top: 6px; }
+.ficha__acoes .botao { flex: 1; justify-content: center; text-decoration: none; }
+
+/* Amostras de cor (mesmo visual das configurações, caso o CSS delas ainda não tenha carregado) */
+.garagem .amostra { position: relative; display: grid; place-items: center; padding: 0; border: 3px solid rgba(255, 255, 255, 0.15); border-radius: 9px; background: var(--amostra); font-weight: 800; cursor: pointer; }
+.garagem .amostra[aria-pressed='true'] { border-color: #fff; outline: 2px solid var(--amostra); outline-offset: 2px; }
+.garagem .amostra--livre { background: conic-gradient(#ffd60a, #00d45a, #1e6bff, #e10600, #ffd60a); color: #fff; text-shadow: 0 1px 3px #000; }
+.garagem .amostra--livre input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* ---------- Telas menores: palco em cima, lista em faixa, ficha embaixo ---------- */
+
+@media (max-width: 980px) {
+  .garagem {
+    grid-template-columns: 1fr;
+    grid-template-rows: 44dvh auto 1fr;
+    grid-template-areas: 'palco' 'lista' 'ficha';
+    gap: 8px;
+    padding: calc(var(--altura-barra) + 4px) 8px 8px;
+  }
+  .garagem__lista { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; padding: 8px; border-radius: 14px; }
+  .garagem__lista h2, .garagem__lista h3 { display: none; }
+  .garagem__lista section, .garagem__lista ul { display: contents; }
+  .carro-item { width: max-content; white-space: nowrap; }
+  .carro-item small { display: none; }
+  .garagem__ficha { border-radius: 14px; }
+  .garagem__lista { scrollbar-width: none; }
+  .garagem__lista::-webkit-scrollbar { display: none; }
+  /* Botão de dirigir sempre à mão no celular */
+  .ficha__acoes { position: sticky; bottom: -16px; margin: auto -16px -16px; padding: 10px 16px 14px; background: linear-gradient(transparent, var(--painel) 30%); }
+}

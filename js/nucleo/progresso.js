@@ -3,9 +3,9 @@
  * de direção (distância total em metros, velocidade máxima em km/h, tempo dirigindo
  * em segundos). Salvo no localStorage. Emite: 'xp', 'nivel', 'conquista', 'mudou'.
  */
-import { ler, gravar } from './armazenamento.js?v=202610231819';
-import { Emissor } from './util.js?v=202610231819';
-import { CONQUISTAS } from './conquistas.js?v=202610231819';
+import { ler, gravar } from './armazenamento.js?v=202610231834';
+import { Emissor } from './util.js?v=202610231834';
+import { CONQUISTAS } from './conquistas.js?v=202610231834';
 
 const CHAVE = 'progresso';
 

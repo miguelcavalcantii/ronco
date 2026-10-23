@@ -3,8 +3,8 @@
  * teclas e opções de tela. Ficam no localStorage; o tema salvo já é aplicado por um
  * script no <head> antes da primeira pintura. Emite 'mudou' com a chave alterada.
  */
-import { ler, gravar } from './armazenamento.js?v=202610231819';
-import { Emissor, movimentoReduzido } from './util.js?v=202610231819';
+import { ler, gravar } from './armazenamento.js?v=202610231834';
+import { Emissor, movimentoReduzido } from './util.js?v=202610231834';
 
 const CHAVE = 'preferencias';
 
