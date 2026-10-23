@@ -12,8 +12,8 @@ export const SECOES = [
     icone: 'volante',
     cor: 'var(--a1)',
     destaque: true,
-    disponivel: false,
-    carregar: () => import('./dirigir/index.js'),
+    disponivel: true,
+    carregar: () => import('./dirigir/index.js?v=202610231819'),
   },
   {
     id: 'garagem',
@@ -22,7 +22,7 @@ export const SECOES = [
     icone: 'garagem',
     cor: 'var(--a2)',
     disponivel: false,
-    carregar: () => import('./garagem/index.js'),
+    carregar: () => import('./garagem/index.js?v=202610231819'),
   },
   {
     id: 'legado',
@@ -31,7 +31,7 @@ export const SECOES = [
     icone: 'capacete',
     cor: 'var(--a3)',
     disponivel: false,
-    carregar: () => import('./legado/index.js'),
+    carregar: () => import('./legado/index.js?v=202610231819'),
   },
   {
     id: 'comparador',

@@ -2,15 +2,15 @@
  * Ponto de entrada do Ronco: liga o áudio, a barra, o menu, as configurações,
  * a tela de abertura e o roteador por hash (#/ = menu, #/s/<id> = seção).
  */
-import { audio } from './nucleo/audio.js';
-import { preferencias } from './nucleo/preferencias.js';
-import { progresso } from './nucleo/progresso.js';
-import { icone } from './nucleo/icones.js';
-import { avisar, ligarControlesSom, ligarChipNivel } from './nucleo/ui.js';
-import { movimentoReduzido } from './nucleo/util.js';
-import { criarConfiguracoes } from './nucleo/configuracoes.js';
-import { criarMenu } from './menu/menu.js';
-import { obterSecao } from './secoes/registro.js';
+import { audio } from './nucleo/audio.js?v=202610231819';
+import { preferencias } from './nucleo/preferencias.js?v=202610231819';
+import { progresso } from './nucleo/progresso.js?v=202610231819';
+import { icone } from './nucleo/icones.js?v=202610231819';
+import { avisar, ligarControlesSom, ligarChipNivel } from './nucleo/ui.js?v=202610231819';
+import { movimentoReduzido } from './nucleo/util.js?v=202610231819';
+import { criarConfiguracoes } from './nucleo/configuracoes.js?v=202610231819';
+import { criarMenu } from './menu/menu.js?v=202610231819';
+import { obterSecao } from './secoes/registro.js?v=202610231819';
 
 const telaMenu = document.getElementById('tela-menu');
 const telaSecao = document.getElementById('tela-secao');
@@ -157,7 +157,7 @@ window.addEventListener('hashchange', () => {
 
 /* Esc volta ao menu (quando nenhuma janela está aberta e a seção não segurou a tecla) */
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'Escape' && !e.defaultPrevented && !configuracoes.aberta && document.body.dataset.tela === 'secao') location.hash = '#/';
+  if (e.code === 'Escape' && !configuracoes.aberta && document.body.dataset.tela === 'secao' && !secaoAtual?.instancia?.capturaEsc) location.hash = '#/';
   if (e.code === 'KeyM' && !e.repeat && !e.target.closest('input, textarea')) audio.alternarMudo();
 });
 
@@ -173,6 +173,7 @@ function abrirIntro() {
       if (comSom) audio.tocar('partida', { canal: 'motor' });
       menu.varrer();
       preferencias.definir('introVista', true);
+      progresso.registrar('app:partida');
       intro.classList.add('intro--saindo');
       setTimeout(() => { intro.hidden = true; resolver(); }, movimentoReduzido() ? 0 : 650);
     };

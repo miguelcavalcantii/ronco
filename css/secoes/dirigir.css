@@ -1,0 +1,216 @@
+/* ==========================================================================
+   Seção Dirigir: tela do jogo, painel (HUD), controles de toque e pausa
+   ========================================================================== */
+
+.jogo { position: absolute; inset: 0; overflow: hidden; background: #000; touch-action: none; user-select: none; -webkit-user-select: none; }
+.jogo__palco { position: absolute; inset: 0; }
+.jogo__tela { width: 100%; height: 100%; }
+
+.hud { position: absolute; inset: 0; pointer-events: none; transition: opacity 0.4s; }
+body.interface-oculta .hud,
+body.interface-oculta .jogo__botoes,
+body.interface-oculta .controles-toque { opacity: 0; pointer-events: none; }
+
+.hud__topo {
+  position: absolute;
+  top: calc(var(--altura-barra) + 4px);
+  left: 50%;
+  display: flex;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+.hud__info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 92px;
+  padding: 4px 12px;
+  border-radius: 10px;
+  background: rgba(8, 10, 9, 0.6);
+  line-height: 1.1;
+}
+.hud__info small { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+.hud__info strong { font-family: var(--fonte-digital); font-size: 1.1rem; color: #fff; }
+
+.hud__fps {
+  position: absolute;
+  top: calc(var(--altura-barra) + 8px);
+  right: 14px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  font-family: var(--fonte-digital);
+  font-size: 0.78rem;
+  color: #a3ff12;
+}
+
+.hud__aviso {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(8, 10, 9, 0.75);
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.25s, transform 0.3s var(--mola);
+}
+.hud__aviso--visivel { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Painel: conta-giros, velocidade e marcha ---------- */
+
+.painel {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'leds leds' 'giros marcha' 'giros rpm';
+  align-items: end;
+  gap: 2px 10px;
+  width: 270px;
+  padding: 10px 14px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.painel__leds { grid-area: leds; display: flex; justify-content: center; gap: 5px; margin-bottom: 4px; }
+.painel__leds i { width: 14px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); }
+.painel__leds i.aceso:nth-child(-n + 4) { background: #3cff6b; }
+.painel__leds i.aceso:nth-child(n + 5):nth-child(-n + 7) { background: #ffd60a; }
+.painel__leds i.aceso:nth-child(n + 8) { background: #ff2a1a; }
+.painel__leds.piscando i { animation: leds-piscar 0.12s steps(2) infinite; }
+@keyframes leds-piscar { 50% { background: #1e6bff; } }
+
+.painel__giros { grid-area: giros; width: 100%; height: auto; }
+.painel__giros path { fill: none; stroke-width: 12; }
+.painel__trilho { stroke: rgba(255, 255, 255, 0.1); }
+.painel__vermelho { stroke: rgba(255, 42, 26, 0.55); stroke-dasharray: 0 88 12 0; }
+.painel__ponteiro { stroke: var(--a1); stroke-dasharray: 0 100; }
+
+.painel__leitura {
+  grid-area: giros;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 2px;
+  line-height: 0.95;
+}
+.painel__leitura strong { font-family: var(--fonte-digital); font-size: 2.9rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.painel__leitura small { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+
+.painel__marcha {
+  grid-area: marcha;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 58px;
+  padding: 4px 8px 6px;
+  border: 2px solid var(--a1);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  line-height: 1;
+}
+.painel__marcha small { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+.painel__marcha strong { font-family: var(--fonte-digital); font-size: 2.2rem; color: var(--a1); }
+.painel__rpm { grid-area: rpm; font-family: var(--fonte-digital); font-size: 0.72rem; text-align: center; color: rgba(255, 255, 255, 0.7); }
+
+/* ---------- Botões flutuantes ---------- */
+
+.jogo__botoes {
+  position: absolute;
+  top: calc(var(--altura-barra) + 4px);
+  left: max(14px, env(safe-area-inset-left));
+  display: flex;
+  gap: 8px;
+  transition: opacity 0.4s;
+}
+
+/* ---------- Controles de toque (só em telas de toque) ---------- */
+
+.controles-toque { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .controles-toque {
+    position: absolute;
+    inset: auto 0 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .controles-toque__lado { display: flex; align-items: flex-end; gap: 10px; pointer-events: auto; }
+  .painel { right: 50%; bottom: auto; top: calc(var(--altura-barra) + 52px); width: 210px; transform: translateX(50%) scale(0.9); transform-origin: top center; }
+  .hud__topo { display: none; }
+}
+.tecla-toque {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  background: rgba(10, 12, 11, 0.55);
+  color: #fff;
+  font-family: var(--fonte-titulo);
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-style: italic;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: transform 0.08s, background 0.1s;
+  touch-action: none;
+}
+.tecla-toque .icone { width: 34px; height: 34px; }
+.tecla-toque.ativo { transform: scale(0.94); background: color-mix(in srgb, var(--a1) 45%, rgba(10, 12, 11, 0.6)); border-color: var(--a1); }
+.tecla-toque--pedal { width: 74px; height: 120px; border-radius: 16px 16px 22px 22px; background-image: repeating-linear-gradient(0deg, transparent 0 12px, rgba(255, 255, 255, 0.08) 12px 16px); }
+.tecla-toque--freio { height: 90px; }
+.tecla-toque--mini { width: 54px; height: 54px; border-radius: 50%; font-size: 0.85rem; }
+@media (max-height: 420px) {
+  .tecla-toque { width: 64px; height: 64px; }
+  .tecla-toque--pedal { width: 64px; height: 96px; }
+  .tecla-toque--freio { height: 74px; }
+}
+
+/* ---------- Pausa ---------- */
+
+.pausa {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  animation: pausa-entrar 0.25s ease-out;
+}
+@keyframes pausa-entrar { from { opacity: 0; } }
+.pausa__caixa {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(420px, 100%);
+  padding: 22px;
+  border: 1px solid var(--linha-forte);
+  border-radius: 20px;
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.9);
+  animation: pausa-caixa 0.4s var(--mola);
+}
+@keyframes pausa-caixa { from { transform: translateY(18px) scale(0.96); } }
+.pausa__caixa h2 { font-size: 2.6rem; font-style: italic; text-transform: uppercase; }
+.pausa__caixa .faixas { width: 120px; transform: skewX(-30deg); }
+.pausa__botoes { display: flex; flex-direction: column; gap: 8px; }
+.pausa__botoes .botao { justify-content: flex-start; width: 100%; }
+.pausa__dica { font-size: 0.85rem; color: var(--texto-suave); }
