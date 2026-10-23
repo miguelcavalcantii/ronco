@@ -278,7 +278,6 @@ input[type='range'].deslizador {
   gap: 12px;
   padding: 10px 14px;
   border: 1px solid color-mix(in srgb, var(--cor) 55%, transparent);
-  border-left: 5px solid var(--cor);
   border-radius: 12px;
   background: color-mix(in srgb, var(--painel) 92%, transparent);
   box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.8);
