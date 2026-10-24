@@ -8,8 +8,8 @@
  * pacote escolhido. Módulos com síntese própria (o ronco do carro, o rádio) pedem o
  * nó de destino de um canal com `destino(canal)` e montam o próprio grafo.
  */
-import { ler, gravar } from './armazenamento.js?v=202610231912';
-import { clamp } from './util.js?v=202610231912';
+import { ler, gravar } from './armazenamento.js?v=202610240909';
+import { clamp } from './util.js?v=202610240909';
 
 export const midiParaHz = (nota) => 440 * 2 ** ((nota - 69) / 12);
 

@@ -1,12 +1,12 @@
 /**
  * Estrada 3D em pedaços (chunks) de 100 m: pista, acostamento, terreno dos dois
- * lados, vegetação e balizadores. Os pedaços ficam num "estoque" (pooling):
- * quando um fica para trás, a geometria dele é reescrita lá na frente,
- * sem criar nem destruir objetos durante o jogo.
+ * lados, vegetação (ou prédios), balizadores, postes e zebras. Os pedaços ficam
+ * num "estoque" (pooling): quando um fica para trás, a geometria dele é reescrita
+ * lá na frente, sem criar nem destruir objetos durante o jogo.
  */
 import * as THREE from 'three';
-import { PASSO, MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610231912';
-import { geradorComSemente } from '../nucleo/util.js?v=202610231912';
+import { PASSO, MEIA_LARGURA, ACOSTAMENTO } from './tracado.js?v=202610240909';
+import { geradorComSemente } from '../nucleo/util.js?v=202610240909';
 
 export const COMPRIMENTO = 100;
 const SEGMENTOS = COMPRIMENTO / PASSO; // 50 fatias por pedaço
@@ -16,8 +16,9 @@ const BORDA = MEIA_LARGURA + ACOSTAMENTO;
 const COLUNAS = [0, 2.5, 6, 14, 30, 60, 100, 150];
 const NC = COLUNAS.length;
 const REPETICAO_TEXTURA = 24; // a textura da pista se repete a cada 24 m
-const MAX_ARVORES = 160;
+const MAX_ARVORES = 220;
 const BALIZAS = (COMPRIMENTO / 20) * 2;
+const MAX_POSTES = 12;
 
 /* ---------- Textura do asfalto (desenhada em canvas) ---------- */
 
@@ -31,6 +32,7 @@ function criarTexturaAsfalto(paisagem, renderizador) {
   const m = L / (2 * BORDA); // pixels por metro na largura
   const pm = A / REPETICAO_TEXTURA; // pixels por metro no comprimento
   const X = (metros) => (metros + BORDA) * m;
+  const tipo = paisagem.marcacao ?? 'estrada';
   // Acostamento e asfalto
   g.fillStyle = paisagem.acostamento;
   g.fillRect(0, 0, L, A);
@@ -43,31 +45,73 @@ function criarTexturaAsfalto(paisagem, renderizador) {
     g.fillStyle = claro ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.12)';
     g.fillRect(aleatorio() * L, aleatorio() * A, 1 + aleatorio() * 1.5, 1 + aleatorio() * 1.5);
   }
-  // Marcas de pneu nas faixas
-  g.fillStyle = 'rgba(0,0,0,0.12)';
-  for (const centro of [-5.4, -1.8, 1.8, 5.4]) {
-    g.fillRect(X(centro - 0.95), 0, 0.5 * m, A);
-    g.fillRect(X(centro + 0.45), 0, 0.5 * m, A);
+  if (tipo === 'pista') {
+    // Autódromo: asfalto liso, borracha na trajetória ideal e linhas brancas nas bordas
+    g.fillStyle = 'rgba(0,0,0,0.18)';
+    g.fillRect(X(-2.4), 0, 4.8 * m, A);
+    g.fillStyle = '#f2f2f2';
+    g.fillRect(X(-MEIA_LARGURA + 0.05), 0, 0.3 * m, A);
+    g.fillRect(X(MEIA_LARGURA - 0.35), 0, 0.3 * m, A);
+  } else {
+    // Marcas de pneu nas faixas
+    g.fillStyle = 'rgba(0,0,0,0.12)';
+    for (const centro of [-5.4, -1.8, 1.8, 5.4]) {
+      g.fillRect(X(centro - 0.95), 0, 0.5 * m, A);
+      g.fillRect(X(centro + 0.45), 0, 0.5 * m, A);
+    }
+    // Faixas brancas das bordas
+    g.fillStyle = '#e9ecef';
+    g.fillRect(X(-MEIA_LARGURA + 0.15), 0, 0.18 * m, A);
+    g.fillRect(X(MEIA_LARGURA - 0.33), 0, 0.18 * m, A);
+    // Tracejado entre as faixas de mesmo sentido (4 m pintado, 8 m vazio)
+    for (const x of [-3.6, 3.6]) {
+      g.fillRect(X(x - 0.075), 0, 0.15 * m, 4 * pm);
+      g.fillRect(X(x - 0.075), 12 * pm, 0.15 * m, 4 * pm);
+    }
+    if (tipo === 'avenida') {
+      // Canteiro central com faixa de luz
+      g.fillStyle = '#2d2f36';
+      g.fillRect(X(-0.5), 0, 1 * m, A);
+      g.fillStyle = '#ff3fd4';
+      g.fillRect(X(-0.06), 0, 0.12 * m, A);
+    } else {
+      // Linha dupla amarela no centro
+      g.fillStyle = '#f4c20d';
+      g.fillRect(X(-0.22), 0, 0.13 * m, A);
+      g.fillRect(X(0.09), 0, 0.13 * m, A);
+    }
   }
-  // Faixas brancas das bordas
-  g.fillStyle = '#e9ecef';
-  g.fillRect(X(-MEIA_LARGURA + 0.15), 0, 0.18 * m, A);
-  g.fillRect(X(MEIA_LARGURA - 0.33), 0, 0.18 * m, A);
-  // Tracejado entre as faixas de mesmo sentido (4 m pintado, 8 m vazio)
-  for (const x of [-3.6, 3.6]) {
-    g.fillRect(X(x - 0.075), 0, 0.15 * m, 4 * pm);
-    g.fillRect(X(x - 0.075), 12 * pm, 0.15 * m, 4 * pm);
-  }
-  // Linha dupla amarela no centro
-  g.fillStyle = '#f4c20d';
-  g.fillRect(X(-0.22), 0, 0.13 * m, A);
-  g.fillRect(X(0.09), 0, 0.13 * m, A);
   const textura = new THREE.CanvasTexture(tela);
   textura.colorSpace = THREE.SRGBColorSpace;
   textura.wrapS = THREE.ClampToEdgeWrapping;
   textura.wrapT = THREE.RepeatWrapping;
   textura.anisotropy = Math.min(8, renderizador.capabilities.getMaxAnisotropy());
   return textura;
+}
+
+/** Fachada de prédio com janelas acesas (cores de neon). */
+function criarTexturaJanelas() {
+  const tela = document.createElement('canvas');
+  tela.width = 128;
+  tela.height = 256;
+  const g = tela.getContext('2d');
+  g.fillStyle = '#0d0e14';
+  g.fillRect(0, 0, 128, 256);
+  const aleatorio = geradorComSemente(77);
+  const cores = ['#ffd27a', '#ffe9b0', '#7ae0ff', '#ff7ae0', '#b6a6ff'];
+  for (let y = 6; y < 250; y += 12) {
+    for (let x = 6; x < 124; x += 12) {
+      const acesa = aleatorio() < 0.42;
+      g.fillStyle = acesa ? cores[Math.floor(aleatorio() * cores.length)] : '#1a1c26';
+      g.fillRect(x, y, 7, 7);
+    }
+  }
+  // Faixa de neon no topo
+  g.fillStyle = '#ff3fd4';
+  g.fillRect(0, 0, 128, 3);
+  const t = new THREE.CanvasTexture(tela);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }
 
 /* ---------- Geometrias compartilhadas da vegetação ---------- */
@@ -78,12 +122,52 @@ function geometriasVegetacao(tipo) {
     perto.translate(0, 4.6, 0);
     const extra = new THREE.ConeGeometry(1.15, 3, 7);
     extra.translate(0, 6.6, 0);
-    const juntas = mesclar([perto, extra]);
     const longe = new THREE.ConeGeometry(1.6, 6.5, 4);
     longe.translate(0, 5.2, 0);
     const tronco = new THREE.CylinderGeometry(0.18, 0.28, 2.8, 5);
     tronco.translate(0, 1.4, 0);
-    return { copaPerto: juntas, copaLonge: longe, tronco };
+    return { copaPerto: mesclar([perto, extra]), copaLonge: longe, tronco };
+  }
+  if (tipo === 'palmeira') {
+    // Folhas: lâminas finas caídas em leque no alto de um tronco alto
+    const folhas = [];
+    for (let i = 0; i < 7; i++) {
+      const f = new THREE.BoxGeometry(0.55, 0.05, 3.2);
+      f.translate(0, 0, 1.5);
+      f.rotateX(0.45);
+      f.rotateY((i / 7) * Math.PI * 2);
+      f.translate(0, 7.2, 0);
+      folhas.push(f);
+    }
+    const longe = new THREE.ConeGeometry(2.6, 1.2, 5);
+    longe.translate(0, 7.0, 0);
+    const tronco = new THREE.CylinderGeometry(0.16, 0.26, 7.4, 6);
+    tronco.translate(0, 3.7, 0);
+    return { copaPerto: mesclar(folhas), copaLonge: longe, tronco };
+  }
+  if (tipo === 'cacto') {
+    const corpo = new THREE.CylinderGeometry(0.32, 0.36, 3.4, 8);
+    corpo.translate(0, 1.7, 0);
+    const braco1 = new THREE.CylinderGeometry(0.2, 0.22, 1.3, 7);
+    braco1.translate(0.7, 2.3, 0);
+    const ligacao1 = new THREE.CylinderGeometry(0.18, 0.18, 0.7, 6);
+    ligacao1.rotateZ(Math.PI / 2);
+    ligacao1.translate(0.4, 1.75, 0);
+    const braco2 = new THREE.CylinderGeometry(0.18, 0.2, 1.0, 7);
+    braco2.translate(-0.6, 2.7, 0);
+    const ligacao2 = new THREE.CylinderGeometry(0.16, 0.16, 0.6, 6);
+    ligacao2.rotateZ(Math.PI / 2);
+    ligacao2.translate(-0.35, 2.3, 0);
+    const longe = new THREE.CylinderGeometry(0.34, 0.36, 3.4, 5);
+    longe.translate(0, 1.7, 0);
+    const tronco = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+    return { copaPerto: mesclar([corpo, braco1, ligacao1, braco2, ligacao2]), copaLonge: longe, tronco };
+  }
+  if (tipo === 'predio') {
+    const caixa = new THREE.BoxGeometry(1, 1, 1);
+    caixa.translate(0, 0.5, 0);
+    const tronco = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+    return { copaPerto: caixa, copaLonge: caixa.clone(), tronco };
   }
   const perto = new THREE.IcosahedronGeometry(2.2, 1);
   perto.translate(0, 4.2, 0);
@@ -94,7 +178,7 @@ function geometriasVegetacao(tipo) {
   return { copaPerto: perto, copaLonge: longe, tronco };
 }
 
-/** Junta geometrias não indexadas simples (sem depender dos addons). */
+/** Junta geometrias simples (sem depender dos addons). */
 function mesclar(lista) {
   const partes = lista.map((g) => (g.index ? g.toNonIndexed() : g));
   const total = partes.reduce((n, g) => n + g.attributes.position.count, 0);
@@ -110,6 +194,15 @@ function mesclar(lista) {
   r.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   r.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
   return r;
+}
+
+/** Poste de iluminação: haste e braço apontando para −x (a pista fica à esquerda dele). */
+function geometriaPoste() {
+  const haste = new THREE.CylinderGeometry(0.1, 0.14, 9, 6);
+  haste.translate(0, 4.5, 0);
+  const braco = new THREE.BoxGeometry(2.4, 0.12, 0.12);
+  braco.translate(-1.1, 8.9, 0);
+  return mesclar([haste, braco]);
 }
 
 /* ---------- Índices fixos (iguais para todos os pedaços) ---------- */
@@ -137,6 +230,8 @@ export class Estrada {
   #grupo = new THREE.Group();
   #materiais;
   #geoVeg;
+  #geoPoste = geometriaPoste();
+  #geoLampada = new THREE.BoxGeometry(0.7, 0.16, 0.35);
   #paisagem;
   #ruido;
   #tracado;
@@ -156,13 +251,19 @@ export class Estrada {
     this.#ruido = ruido;
     this.#renderizador = renderizador;
     this.#preset = preset;
+    this.#geoLampada.translate(-2.2, 8.82, 0);
     cena.add(this.#grupo);
+    const janelas = criarTexturaJanelas();
     this.#materiais = {
       pista: new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0 }),
       terreno: new THREE.MeshLambertMaterial({ vertexColors: true }),
       tronco: new THREE.MeshLambertMaterial({ color: '#5a4026' }),
       copa: new THREE.MeshLambertMaterial({ color: '#ffffff' }),
-      baliza: new THREE.MeshLambertMaterial({ color: '#f2f2f2', emissive: '#000000' }),
+      predio: new THREE.MeshLambertMaterial({ color: '#ffffff', map: janelas, emissive: '#ffffff', emissiveMap: janelas, emissiveIntensity: 0.9 }),
+      baliza: new THREE.MeshLambertMaterial({ color: '#f2f2f2' }),
+      zebra: new THREE.MeshLambertMaterial({ vertexColors: true }),
+      poste: new THREE.MeshLambertMaterial({ color: '#5a5d66' }),
+      lampada: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
     };
     this.definirPaisagem(paisagem);
   }
@@ -172,11 +273,14 @@ export class Estrada {
     this.#materiais.pista.map?.dispose();
     this.#materiais.pista.map = criarTexturaAsfalto(paisagem, this.#renderizador);
     this.#materiais.pista.needsUpdate = true;
+    this.#materiais.lampada.color.set(paisagem.postes?.cor ?? '#ffffff');
     if (this.#geoVeg) Object.values(this.#geoVeg).forEach((g) => g.dispose());
     this.#geoVeg = geometriasVegetacao(paisagem.vegetacao.tipo);
+    const materialCopa = paisagem.vegetacao.tipo === 'predio' ? this.#materiais.predio : this.#materiais.copa;
     for (const p of [...this.#pedacos.values(), ...this.#estoque]) {
       p.troncos.geometry = this.#geoVeg.tronco;
       p.copas.geometry = this.#geoVeg.copaPerto;
+      p.copas.material = materialCopa;
       p.copaLonge = false;
     }
     this.reconstruir();
@@ -251,14 +355,21 @@ export class Estrada {
   #escala(c, lado) {
     const raio = Math.abs(c.curvatura) > 1e-5 ? 1 / Math.abs(c.curvatura) : Infinity;
     const dentro = (c.curvatura > 0 ? 1 : -1) === lado;
-    return dentro ? Math.min(1, (0.8 * raio - BORDA) / COLUNAS[NC - 1]) : 1;
+    return dentro ? Math.max(0, Math.min(1, (0.8 * raio - BORDA) / COLUNAS[NC - 1])) : 1;
+  }
+
+  /** Distância efetiva de uma coluna (no autódromo o terreno é só uma "saia" junto da pista). */
+  #distanciaColuna(d0, escala) {
+    if (this.#paisagem.circuito) return Math.min(d0, 2.5);
+    return d0 * escala;
   }
 
   /** Altura exata de uma coluna do terreno (`d0` = distância nominal da beira). */
   #alturaColuna(c, lado, d0, escala) {
-    const x = lado * (BORDA + d0 * escala);
+    const x = lado * (BORDA + this.#distanciaColuna(d0, escala));
     const n = this.#ruido.fbm2((c.x - Math.cos(c.rumo) * x + this.origem.x) / 190, (c.z + Math.sin(c.rumo) * x + this.origem.z) / 190, 4);
-    return { altura: c.y + lado * BORDA * c.lateral + this.#paisagem.relevo(d0, n) - (d0 === 0 ? 0.05 : 0), ruido: n };
+    const relevo = this.#paisagem.circuito ? (d0 === 0 ? 0 : -1.2) : this.#paisagem.relevo(d0, n, lado);
+    return { altura: c.y + lado * BORDA * c.lateral + relevo - (d0 === 0 ? 0.05 : 0), ruido: n };
   }
 
   /** Altura entre duas colunas, interpolada como na malha. */
@@ -276,12 +387,17 @@ export class Estrada {
     for (const p of [...this.#pedacos.values(), ...this.#estoque]) {
       p.pista.geometry.dispose();
       p.terreno.geometry.dispose();
+      p.zebras.geometry.dispose();
       p.troncos.dispose();
       p.copas.dispose();
       p.balizas.dispose();
+      p.postes.dispose();
+      p.lampadas.dispose();
     }
     Object.values(this.#materiais).forEach((m) => { m.map?.dispose(); m.dispose(); });
     Object.values(this.#geoVeg).forEach((g) => g.dispose());
+    this.#geoPoste.dispose();
+    this.#geoLampada.dispose();
     this.#grupo.removeFromParent();
   }
 
@@ -304,15 +420,25 @@ export class Estrada {
     geoTerreno.setIndex(indicesGrade(colunas, NC - 1));
     const terreno = new THREE.Mesh(geoTerreno, this.#materiais.terreno);
 
+    // Zebras: até 2 tiras (uma por lado) por fatia; vértices não usados ficam degenerados
+    const geoZebra = new THREE.BufferGeometry();
+    geoZebra.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SEGMENTOS * 2 * 6 * 3), 3));
+    geoZebra.setAttribute('color', new THREE.BufferAttribute(new Float32Array(SEGMENTOS * 2 * 6 * 3), 3));
+    geoZebra.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(SEGMENTOS * 2 * 6 * 3), 3));
+    const zebras = new THREE.Mesh(geoZebra, this.#materiais.zebra);
+
+    const predio = this.#paisagem.vegetacao.tipo === 'predio';
     const troncos = new THREE.InstancedMesh(this.#geoVeg.tronco, this.#materiais.tronco, MAX_ARVORES);
-    const copas = new THREE.InstancedMesh(this.#geoVeg.copaPerto, this.#materiais.copa, MAX_ARVORES);
+    const copas = new THREE.InstancedMesh(this.#geoVeg.copaPerto, predio ? this.#materiais.predio : this.#materiais.copa, MAX_ARVORES);
     copas.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(MAX_ARVORES * 3), 3);
     const geoBaliza = new THREE.BoxGeometry(0.14, 1.1, 0.14);
     geoBaliza.translate(0, 0.55, 0);
     const balizas = new THREE.InstancedMesh(geoBaliza, this.#materiais.baliza, BALIZAS);
-    grupo.add(pista, terreno, troncos, copas, balizas);
+    const postes = new THREE.InstancedMesh(this.#geoPoste, this.#materiais.poste, MAX_POSTES);
+    const lampadas = new THREE.InstancedMesh(this.#geoLampada, this.#materiais.lampada, MAX_POSTES);
+    grupo.add(pista, terreno, zebras, troncos, copas, balizas, postes, lampadas);
     this.#grupo.add(grupo);
-    return { grupo, pista, terreno, troncos, copas, balizas, copaLonge: false };
+    return { grupo, pista, terreno, zebras, troncos, copas, balizas, postes, lampadas, copaLonge: false };
   }
 
   #montar(p, n) {
@@ -333,6 +459,7 @@ export class Estrada {
     const fracaoV = ((s0 / REPETICAO_TEXTURA) % 1);
     const xsPista = [-BORDA, -MEIA_LARGURA, MEIA_LARGURA, BORDA];
     const grama = paisagem.grama;
+    const ladoAgua = paisagem.agua?.lado ?? 0;
 
     for (let i = 0; i < LINHAS; i++) {
       const a = tracado.indice(i0 + i);
@@ -365,13 +492,13 @@ export class Estrada {
       for (let c = 0; c < colunas; c++) {
         const lado = c < NC ? -1 : 1;
         const d0 = c < NC ? COLUNAS[NC - 1 - c] : COLUNAS[c - NC];
-        const x = lado * (BORDA + d0 * escalas[lado]);
+        const x = lado * (BORDA + this.#distanciaColuna(d0, escalas[lado]));
         const { altura, ruido: ruidoLocal } = this.#alturaColuna(a, lado, d0, escalas[lado]);
         const k = (i * colunas + c) * 3;
         posTerreno[k] = cx + rx * x;
         posTerreno[k + 1] = altura - o.y;
         posTerreno[k + 2] = cz + rz * x;
-        // Cor: terra perto da pista, grama variada, rocha nos altos
+        // Cor: terra perto da pista, grama variada, rocha nos altos, areia na praia
         const variacao = this.#ruido.r2((a.x + rx * x + this.origem.x) / 23, (a.z + rz * x + this.origem.z) / 23) * 0.5 + 0.5;
         const indiceGrama = Math.min(grama.length - 1, Math.floor(variacao * grama.length));
         this.#cor.set(grama[indiceGrama]);
@@ -379,6 +506,7 @@ export class Estrada {
         this.#cor.lerp(this.#corA, (variacao * grama.length) % 1);
         if (d0 < 3) this.#cor.lerp(this.#corB.set(paisagem.terra), d0 === 0 ? 0.75 : 0.35);
         if (d0 >= 60 && ruidoLocal > 0.25) this.#cor.lerp(this.#corB.set(paisagem.rocha), Math.min(1, (ruidoLocal - 0.25) * 2.5));
+        if (lado === ladoAgua && d0 >= 6 && paisagem.areia) this.#cor.lerp(this.#corB.set(paisagem.areia), d0 >= 14 ? 1 : 0.6);
         corTerreno[k] = this.#cor.r;
         corTerreno[k + 1] = this.#cor.g;
         corTerreno[k + 2] = this.#cor.b;
@@ -395,64 +523,151 @@ export class Estrada {
 
     this.#plantar(p, n, s0, o);
     this.#balizar(p, s0, o);
+    this.#zebrar(p, i0, o);
+    this.#iluminar(p, s0, o);
   }
 
-  /** Árvores: posições sorteadas com a semente do pedaço (sempre as mesmas no mesmo lugar). */
+  /** Árvores (ou prédios): posições sorteadas com a semente do pedaço. */
   #plantar(p, n, s0, o) {
     const aleatorio = geradorComSemente(n * 7919 + 13);
     const veg = this.#paisagem.vegetacao;
+    const predio = veg.tipo === 'predio';
     const alvo = Math.min(MAX_ARVORES, Math.round(95 * veg.densidade * this.#preset.vegetacao));
     const cores = veg.cores;
+    const dMin = veg.dMin ?? 5;
+    const dMax = veg.dMax ?? 140;
+    const ladoAgua = this.#paisagem.agua?.lado ?? 0;
     let quantas = 0;
     for (let t = 0; t < alvo * 2 && quantas < alvo; t++) {
       const s = s0 + aleatorio() * COMPRIMENTO;
       const lado = aleatorio() < 0.5 ? -1 : 1;
-      const d = 5 + aleatorio() ** 0.8 * 135;
+      const d = dMin + aleatorio() ** 0.8 * (dMax - dMin);
       const c = this.#tracado.em(s, this.#p);
       const dEf = d * this.#escala(c, lado);
-      if (dEf < 4) continue;
+      if (dEf < Math.min(4, dMin)) continue;
+      // Do lado do mar só há árvores perto da pista (o resto é praia)
+      if (lado === ladoAgua && d > 12) continue;
       const x = lado * (BORDA + dEf);
       const wx = c.x - Math.cos(c.rumo) * x;
       const wz = c.z + Math.sin(c.rumo) * x;
-      // Bosques e clareiras
-      const mata = this.#ruido.fbm2((wx + this.origem.x) / 140, (wz + this.origem.z) / 140, 2);
-      if (mata < -0.12 + aleatorio() * 0.1) continue;
-      const y = this.#alturaInterpolada(c, lado, d) - 0.2;
-      const escala = 0.75 + aleatorio() * 0.8;
-      this.#q.setFromAxisAngle(this.#e.set(0, 1, 0), aleatorio() * Math.PI * 2);
-      this.#m.compose(this.#v.set(wx - o.x, y - o.y, wz - o.z), this.#q, this.#e.set(escala, escala * (0.85 + aleatorio() * 0.4), escala));
+      if (!predio) {
+        // Bosques e clareiras
+        const mata = this.#ruido.fbm2((wx + this.origem.x) / 140, (wz + this.origem.z) / 140, 2);
+        if (mata < -0.12 + aleatorio() * 0.1) continue;
+      }
+      const y = this.#alturaInterpolada(c, lado, d) - (predio ? 0.5 : 0.2);
+      if (predio) {
+        // Prédio alinhado com a rua: largura 10–24 m, altura 14–80 m
+        const largura = 10 + aleatorio() * 14;
+        const altura = 14 + aleatorio() ** 1.6 * 66;
+        this.#q.setFromAxisAngle(this.#e.set(0, 1, 0), c.rumo);
+        this.#m.compose(this.#v.set(wx - o.x, y - o.y, wz - o.z), this.#q, this.#e.set(largura, altura, largura * (0.8 + aleatorio() * 0.5)));
+      } else {
+        const escala = (0.75 + aleatorio() * 0.8) * (veg.escala ?? 1);
+        this.#q.setFromAxisAngle(this.#e.set(0, 1, 0), aleatorio() * Math.PI * 2);
+        this.#m.compose(this.#v.set(wx - o.x, y - o.y, wz - o.z), this.#q, this.#e.set(escala, escala * (0.85 + aleatorio() * 0.4), escala));
+      }
       p.troncos.setMatrixAt(quantas, this.#m);
       p.copas.setMatrixAt(quantas, this.#m);
       this.#cor.set(cores[Math.floor(aleatorio() * cores.length)]).offsetHSL(0, 0, (aleatorio() - 0.5) * 0.06);
       p.copas.setColorAt(quantas, this.#cor);
       quantas++;
     }
+    p.copas.count = quantas;
+    p.troncos.count = predio || veg.tipo === 'cacto' ? 0 : quantas;
     for (const malha of [p.troncos, p.copas]) {
-      malha.count = quantas;
       malha.instanceMatrix.needsUpdate = true;
       malha.computeBoundingSphere();
     }
     p.copas.instanceColor.needsUpdate = true;
   }
 
-  /** Balizadores brancos a cada 20 m nos dois lados (ajudam a sentir a velocidade). */
+  /** Balizadores brancos a cada 20 m nos dois lados (não há na cidade nem no autódromo). */
   #balizar(p, s0, o) {
     let k = 0;
-    for (let s = s0; s < s0 + COMPRIMENTO; s += 20) {
-      const c = this.#tracado.em(s, this.#p);
-      for (const lado of [-1, 1]) {
-        const x = lado * (BORDA + 0.6);
-        this.#q.setFromAxisAngle(this.#e.set(0, 1, 0), c.rumo);
-        this.#m.compose(
-          this.#v.set(c.x - Math.cos(c.rumo) * x - o.x, c.y + x * c.lateral - o.y, c.z + Math.sin(c.rumo) * x - o.z),
-          this.#q,
-          this.#e.set(1, 1, 1),
-        );
-        p.balizas.setMatrixAt(k++, this.#m);
+    if (!this.#paisagem.circuito && !this.#paisagem.postes) {
+      for (let s = s0; s < s0 + COMPRIMENTO; s += 20) {
+        const c = this.#tracado.em(s, this.#p);
+        for (const lado of [-1, 1]) {
+          const x = lado * (BORDA + 0.6);
+          this.#q.setFromAxisAngle(this.#e.set(0, 1, 0), c.rumo);
+          this.#m.compose(
+            this.#v.set(c.x - Math.cos(c.rumo) * x - o.x, c.y + x * c.lateral - o.y, c.z + Math.sin(c.rumo) * x - o.z),
+            this.#q,
+            this.#e.set(1, 1, 1),
+          );
+          p.balizas.setMatrixAt(k++, this.#m);
+        }
       }
     }
     p.balizas.count = k;
     p.balizas.instanceMatrix.needsUpdate = true;
     p.balizas.computeBoundingSphere();
+  }
+
+  /** Zebras vermelhas e brancas nas curvas do autódromo. */
+  #zebrar(p, i0, o) {
+    const pos = p.zebras.geometry.attributes.position.array;
+    const cor = p.zebras.geometry.attributes.color.array;
+    const nor = p.zebras.geometry.attributes.normal.array;
+    pos.fill(0);
+    let k = 0;
+    if (this.#paisagem.zebras) {
+      const vermelho = [0.85, 0.08, 0.06];
+      const branco = [0.95, 0.95, 0.95];
+      for (let i = 0; i < SEGMENTOS; i++) {
+        const a = this.#tracado.indice(i0 + i);
+        const b = this.#tracado.indice(i0 + i + 1);
+        if (Math.abs(a.curvatura) < 1 / 160) continue;
+        const listra = Math.floor((i0 + i) / 2) % 2 ? vermelho : branco;
+        for (const lado of [-1, 1]) {
+          const x1 = lado * (MEIA_LARGURA - 0.9);
+          const x2 = lado * (MEIA_LARGURA + 0.5);
+          const ponto = (c, x) => [c.x - Math.cos(c.rumo) * x - o.x, c.y + x * c.lateral + 0.05 - o.y, c.z + Math.sin(c.rumo) * x - o.z];
+          const quad = lado > 0
+            ? [ponto(a, x1), ponto(a, x2), ponto(b, x1), ponto(a, x2), ponto(b, x2), ponto(b, x1)]
+            : [ponto(a, x2), ponto(a, x1), ponto(b, x2), ponto(a, x1), ponto(b, x1), ponto(b, x2)];
+          for (const v of quad) {
+            pos.set(v, k * 3);
+            cor.set(listra, k * 3);
+            nor.set([0, 1, 0], k * 3);
+            k++;
+          }
+        }
+      }
+    }
+    const geo = p.zebras.geometry;
+    geo.setDrawRange(0, k);
+    geo.attributes.position.needsUpdate = true;
+    geo.attributes.color.needsUpdate = true;
+    geo.attributes.normal.needsUpdate = true;
+    geo.computeBoundingSphere();
+    p.zebras.visible = k > 0;
+  }
+
+  /** Postes de iluminação (cidade), alternando os lados. */
+  #iluminar(p, s0, o) {
+    let k = 0;
+    const config = this.#paisagem.postes;
+    if (config) {
+      const passo = config.distancia ?? 30;
+      const inicio = Math.ceil(s0 / passo) * passo;
+      for (let s = inicio; s < s0 + COMPRIMENTO && k < MAX_POSTES; s += passo) {
+        const c = this.#tracado.em(s, this.#p);
+        const lado = Math.round(s / passo) % 2 ? 1 : -1;
+        const x = lado * (BORDA + 1.0);
+        // O braço do poste aponta para −x local; gira para apontar para a pista
+        this.#q.setFromAxisAngle(this.#e.set(0, 1, 0), c.rumo + (lado > 0 ? Math.PI : 0));
+        this.#m.compose(this.#v.set(c.x - Math.cos(c.rumo) * x - o.x, c.y + x * c.lateral - o.y, c.z + Math.sin(c.rumo) * x - o.z), this.#q, this.#e.set(1, 1, 1));
+        p.postes.setMatrixAt(k, this.#m);
+        p.lampadas.setMatrixAt(k, this.#m);
+        k++;
+      }
+    }
+    for (const malha of [p.postes, p.lampadas]) {
+      malha.count = k;
+      malha.instanceMatrix.needsUpdate = true;
+      malha.computeBoundingSphere();
+    }
   }
 }

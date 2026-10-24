@@ -8,6 +8,8 @@
  * aplicarAjustes() (pintura, rodas, vidros, altura) e destruir().
  */
 import * as THREE from 'three';
+import { construirCarroceria, pecas } from './carroceria.js?v=202610240909';
+import { DESENHOS } from './desenhos.js?v=202610240909';
 
 /* ---------- Formas de carroceria ---------- */
 
@@ -215,22 +217,26 @@ export function criarCarro3d(carro, { ambiente = null, ajustes = ajustesPadrao(c
     azul: new THREE.MeshPhysicalMaterial({ color: '#0b3fa8', metalness: 0.1, roughness: 0.35, clearcoat: 1, envMap: ambiente }),
   };
 
-  const medidas = carro.forma === 'f1' ? montarF1(carroceria, materiais) : montarCarroceria(carroceria, forma, materiais);
+  const desenho = carro.forma !== 'f1' ? DESENHOS[carro.id] : null;
+  let medidas;
+  if (carro.forma === 'f1') medidas = montarF1(carroceria, materiais);
+  else if (desenho) medidas = montarDesenho(carroceria, desenho, materiais);
+  else medidas = montarCarroceria(carroceria, forma, materiais);
+  // Medidas das rodas: do desenho (reais) ou da forma genérica
+  const geo = medidas.rodas ?? {
+    raio: forma.raio, entreEixos: forma.entreEixos,
+    posicoes: [[-forma.bitola, forma.rodaFrente, true], [forma.bitola, forma.rodaFrente, true], [-forma.bitola, forma.rodaFrente - forma.entreEixos, false], [forma.bitola, forma.rodaFrente - forma.entreEixos, false]],
+  };
   // Elétrico não tem escapamento
   if (carro.motor === 'eletrico') carroceria.children.filter((o) => o.name === 'escape').forEach((o) => carroceria.remove(o));
 
   /* ---------- Rodas ---------- */
   const rodas = [];
   const pivos = [];
-  const posicoes = [
-    [-forma.bitola, forma.rodaFrente, true],
-    [forma.bitola, forma.rodaFrente, true],
-    [-forma.bitola, forma.rodaFrente - forma.entreEixos, false],
-    [forma.bitola, forma.rodaFrente - forma.entreEixos, false],
-  ];
+  const posicoes = geo.posicoes;
   const f1 = carro.forma === 'f1';
   for (const [x, z, dianteira] of posicoes) {
-    const raio = f1 && !dianteira ? forma.raio * 1.08 : forma.raio;
+    const raio = f1 && !dianteira ? geo.raio * 1.08 : geo.raio;
     const largura = f1 ? (dianteira ? 0.3 : 0.42) : 0.26;
     const pivo = new THREE.Group();
     pivo.position.set(x, raio, z);
@@ -298,11 +304,11 @@ export function criarCarro3d(carro, { ambiente = null, ajustes = ajustesPadrao(c
     carroceria,
     rodas,
     pivos,
-    raioRoda: forma.raio,
-    entreEixos: forma.entreEixos,
+    raioRoda: geo.raio,
+    entreEixos: geo.entreEixos,
     comprimento: medidas.comprimento,
-    cockpit: f1 ? [0, 0.86, 0.3] : [0.36, 1.08, -0.2],
-    capo: f1 ? 0.92 : 1.22,
+    cockpit: f1 ? [0, 0.86, 0.3] : medidas.cockpit ?? [0.36, 1.08, -0.2],
+    capo: f1 ? 0.92 : medidas.capo ?? 1.22,
     get ajustes() { return ajustesAtuais; },
     aplicarAjustes,
     /** Liga/desliga a luz de freio. */
@@ -463,4 +469,176 @@ function montarF1(carroceria, m) {
   g(new THREE.BoxGeometry(0.12, 0.08, 0.04), m.lanterna, 0, 0.3, -2.12);
   // Faróis não existem num F1: o material fica sem peças
   return { comprimento: 4.6 };
+}
+
+/* ---------- Carros com desenho próprio (carroceria por seções) ---------- */
+
+function montarDesenho(carroceria, d, m) {
+  const c = construirCarroceria(d, m);
+  carroceria.add(c.grupo);
+  const W = d.largura;
+  const L = d.comprimento;
+  const add = (geo, mat, x, y, z) => {
+    const malha = new THREE.Mesh(geo, mat);
+    malha.position.set(x, y, z);
+    c.grupo.add(malha);
+    return malha;
+  };
+  const espelhar = (fn) => [-1, 1].map(fn);
+
+  /* Faróis */
+  const f = d.farol;
+  const xf = (f.x * W) / 2;
+  if (f.tipo === 'lamina') {
+    espelhar((s) => c.colar(pecas.lamina(f.l, f.a, -s * (f.angulo ?? 0)), m.farol, s * xf, f.y, 1));
+    if (f.faixaCentral) c.colar(pecas.retangulo(W * 0.62, 0.015), m.farol, 0, f.y + 0.03, 1);
+  } else if (f.tipo === 'redondo') {
+    espelhar((s) => {
+      c.colar(pecas.redondo(f.r + 0.015), m.escuro, s * xf, f.y, 1, 0.002);
+      c.colar(pecas.redondo(f.r), m.farol, s * xf, f.y, 1, 0.012);
+    });
+  } else if (f.tipo === 'y') {
+    espelhar((s) => {
+      c.colar(pecas.lamina(f.l, 0.04, -s * 0.35), m.farol, s * xf, f.y + 0.03, 1);
+      c.colar(pecas.lamina(f.l * 0.55, 0.04, s * 0.5), m.farol, s * (xf - 0.08), f.y - 0.04, 1);
+    });
+  } else if (f.tipo === 'garra') {
+    // Farol fino + três "garras" de luz diurna descendo
+    espelhar((s) => {
+      c.colar(pecas.lamina(0.36, 0.06, -s * 0.12), m.farol, s * xf, f.y, 1);
+      for (let i = 0; i < 3; i++) c.colar(pecas.lamina(0.03, 0.2, s * 0.25), m.farol, s * (xf - 0.1 + i * 0.07), f.y - 0.2, 1);
+    });
+  } else if (f.tipo === 'quatroPontos') {
+    espelhar((s) => {
+      c.colar(pecas.redondo(0.1), m.escuro, s * xf, f.y, 1, 0.002);
+      for (const [dx, dy] of [[-0.04, 0.04], [0.04, 0.04], [-0.04, -0.04], [0.04, -0.04]]) c.colar(pecas.retangulo(0.04, 0.025), m.farol, s * xf + dx, f.y + dy, 1, 0.012);
+    });
+  }
+
+  /* Grade e entrada de ar inferior */
+  const g = d.grade;
+  if (g) {
+    if (g.tipo === 'larga') c.colar(pecas.retangulo(g.l, g.a), m.escuro, 0, g.y, 1);
+    else if (g.tipo === 'rins') espelhar((s) => c.colar(pecas.hexagono(g.l, g.a), m.escuro, s * g.x, g.y, 1));
+    else if (g.tipo === 'hexagono' || g.tipo === 'trapezio') c.colar(pecas.hexagono(g.l, g.a), m.escuro, 0, g.y, 1);
+    else if (g.tipo === 'barras') {
+      c.colar(pecas.hexagono(g.l, g.a), m.escuro, 0, g.y, 1);
+      for (let i = 0; i < g.barras; i++) c.colar(pecas.retangulo(0.018, g.a * 0.8), m.cromado, -g.l * 0.38 + (i * g.l * 0.76) / (g.barras - 1), g.y, 1, 0.014);
+    }
+    if (g.fioVermelho) c.colar(pecas.retangulo(g.l * 1.1, 0.012), m.lanterna, 0, g.y - 0.03, 1, 0.012);
+  }
+  if (d.entrada) c.colar(pecas.retangulo(d.entrada.l, d.entrada.a), m.escuro, 0, d.entrada.y, 1);
+
+  /* Lanternas (usam o material da luz de freio) */
+  const l = d.lanterna;
+  if (l.tipo === 'faixa') {
+    c.colar(pecas.retangulo(l.l, l.a), m.lanterna, 0, l.y, -1);
+  } else if (l.tipo === 'lamina') {
+    espelhar((s) => c.colar(pecas.lamina(l.l, l.a, s * (l.angulo ?? 0)), m.lanterna, s * W * 0.31, l.y, -1));
+  } else if (l.tipo === 'l') {
+    espelhar((s) => {
+      c.colar(pecas.retangulo(l.l, 0.04), m.lanterna, s * W * 0.31, l.y + 0.03, -1);
+      c.colar(pecas.retangulo(0.04, l.a), m.lanterna, s * (W * 0.31 + l.l / 2 - 0.02), l.y, -1);
+    });
+  } else if (l.tipo === 'tribarra') {
+    espelhar((s) => { for (let i = 0; i < 3; i++) c.colar(pecas.retangulo(0.045, 0.16), m.lanterna, s * ((l.x * W) / 2 - 0.08 + i * 0.08), l.y, -1); });
+  } else if (l.tipo === 'duploRedondo') {
+    espelhar((s) => { for (const dx of [-0.08, 0.08]) c.colar(pecas.redondo(l.r), m.lanterna, s * ((l.x * W) / 2 + dx), l.y, -1); });
+  } else if (l.tipo === 'y') {
+    espelhar((s) => {
+      c.colar(pecas.lamina(l.l, 0.035, s * 0.35), m.lanterna, (s * l.x * W) / 2, l.y + 0.03, -1);
+      c.colar(pecas.lamina(l.l * 0.55, 0.035, -s * 0.5), m.lanterna, s * ((l.x * W) / 2 - 0.08), l.y - 0.04, -1);
+    });
+  } else if (l.tipo === 'garraTraseira') {
+    // Faixa preta de lado a lado com três "garras" em cada lanterna
+    c.colar(pecas.retangulo(W * 0.78, 0.16), m.escuro, 0, l.y, -1, 0.002);
+    espelhar((s) => { for (let i = 0; i < 3; i++) c.colar(pecas.lamina(0.16, 0.025, s * 0.25), m.lanterna, s * W * 0.31, l.y + 0.05 - i * 0.05, -1, 0.012); });
+  }
+  // Difusor
+  c.colar(pecas.retangulo(W * 0.62, 0.12), m.escuro, 0, c.base(0.04) + 0.1, -1);
+
+  /* Setas (laranja) nos quatro cantos; esquerda do motorista = +x local */
+  for (const [s, mat] of [[1, m.setaEsquerda], [-1, m.setaDireita]]) {
+    c.colar(pecas.retangulo(0.1, 0.035), mat, s * W * 0.36, f.y - 0.07, 1, 0.012);
+    c.colar(pecas.retangulo(0.1, 0.035), mat, s * W * 0.36, (l.y ?? 0.85) - 0.09, -1, 0.012);
+  }
+
+  /* Escapes */
+  const e = d.escapes ?? { tipo: 'duplo', y: 0.36 };
+  const escape = (x, y, r = 0.045) => {
+    c.colar(pecas.redondo(r, 0.08), m.cromado, x, y, -1, 0.02).name = 'escape';
+    c.colar(pecas.redondo(r * 0.7, 0.08), m.preto, x, y, -1, 0.03).name = 'escape';
+  };
+  const ye = e.y ?? 0.36;
+  if (e.tipo === 'duplo') espelhar((s) => escape(s * W * 0.3, ye));
+  else if (e.tipo === 'quatro') espelhar((s) => { escape(s * W * 0.27, ye); escape(s * W * 0.34, ye); });
+  else if (e.tipo === 'duploCentro') { escape(-0.08, ye); escape(0.08, ye); }
+  else if (e.tipo === 'central') c.colar(pecas.hexagono(0.22, 0.12, 0.08), m.cromado, 0, ye, -1, 0.02).name = 'escape';
+  else if (e.tipo === 'simples') escape(-W * 0.3, ye);
+
+  /* Entradas de ar laterais (supercarros) */
+  if (d.lateral) {
+    const { t0, t1, y0, y1 } = d.lateral;
+    const tm = (t0 + t1) / 2;
+    const ym = (y0 + y1) / 2;
+    espelhar((s) => {
+      const x = s * (c.lateralX(tm, ym) - 0.004);
+      const malha = add(new THREE.BoxGeometry(0.03, y1 - y0, (t1 - t0) * L), m.escuro, x, ym, c.zDe(tm));
+      malha.rotation.y = s * 0.04;
+    });
+  }
+
+  /* Aerofólio */
+  const a = d.aerofolio?.tipo;
+  if (a === 'labio') add(new THREE.BoxGeometry(W * 0.5, 0.03, 0.12), m.pintura, 0, c.topo(0.035) + 0.015, c.zDe(0.035));
+  else if (a === 'asa') {
+    add(new THREE.BoxGeometry(W * 0.86, 0.04, 0.3), m.escuro, 0, d.aerofolio.y, c.zDe(0.06));
+    espelhar((s) => add(new THREE.BoxGeometry(0.04, d.aerofolio.y - c.topo(0.06), 0.1), m.escuro, s * W * 0.25, (d.aerofolio.y + c.topo(0.06)) / 2, c.zDe(0.06)));
+  } else if (a === 'teto') {
+    const tA = d.estufa.teto[0][0];
+    add(new THREE.BoxGeometry(W * 0.6, 0.04, 0.22), m.pintura, 0, c.teto(tA + 0.06) + 0.01, c.zDe(tA + 0.03));
+  }
+
+  /* Espelhos retrovisores (na base do para-brisa) */
+  const tPara = d.estufa.teto[d.estufa.teto.length - 1][0];
+  const yEsp = c.topo(tPara) + 0.1;
+  espelhar((s) => {
+    const x = s * (c.lateralX(tPara - 0.02, yEsp - 0.12) + 0.06);
+    add(new THREE.BoxGeometry(0.16, 0.09, 0.07), m.pintura, x, yEsp, c.zDe(tPara - 0.03));
+    add(new THREE.BoxGeometry(0.1, 0.03, 0.03), m.preto, x - s * 0.08, yEsp - 0.02, c.zDe(tPara - 0.03));
+  });
+
+  /* Interior: bancos, painel e volante (aparecem pelos vidros) */
+  const zPara = c.zDe(tPara);
+  const yCintura = c.topo(tPara);
+  for (const x of [-0.38, 0.38]) {
+    const banco = add(new THREE.BoxGeometry(0.46, 0.55, 0.16), m.interior, x, yCintura - 0.12, zPara - 1.0);
+    banco.rotation.x = -0.2;
+  }
+  add(new THREE.BoxGeometry(W * 0.7, 0.16, 0.4), m.interior, 0, yCintura - 0.14, zPara - 0.45);
+  const volante = add(new THREE.TorusGeometry(0.17, 0.025, 6, 16), m.preto, 0.38, yCintura - 0.02, zPara - 0.7);
+  volante.rotation.x = -0.45;
+
+  /* Rodas: posição real (entre-eixos e balanços) e caixas de roda escuras */
+  const zF = L / 2 - d.balancoF;
+  const zR = -L / 2 + d.balancoT;
+  const r = d.raio;
+  const posicoes = [];
+  for (const [z, dianteira] of [[zF, true], [zR, false]]) {
+    const t = (z + L / 2) / L;
+    const xLado = c.lateralX(t, r + 0.12);
+    for (const s of [-1, 1]) {
+      posicoes.push([s * (xLado - 0.1), z, dianteira]);
+      // "Caixa de roda": disco escuro na lateral, atrás do pneu
+      const caixa = add(new THREE.CircleGeometry(r + 0.06, 24), m.preto, s * (c.lateralX(t, r) + 0.004), r, z);
+      caixa.rotation.y = (s * Math.PI) / 2;
+    }
+  }
+
+  return {
+    comprimento: L,
+    rodas: { raio: r, entreEixos: zF - zR, posicoes },
+    cockpit: [0.38, yCintura + 0.22, zPara - 0.85],
+    capo: c.topo(0.85) + 0.32,
+  };
 }

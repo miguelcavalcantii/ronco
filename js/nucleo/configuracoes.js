@@ -3,10 +3,10 @@
  * Visual (tema e destaque), Som (pacote, volumes e mudo), Gráficos, Direção e Teclas.
  * Tudo é aplicado na hora e salvo pelos módulos de preferências e de áudio.
  */
-import { icone } from './icones.js?v=202610231912';
-import { TEMAS, DESTAQUES_SUGERIDOS, TECLAS_PADRAO } from './preferencias.js?v=202610231912';
-import { CANAIS, PACOTES_SOM } from './audio.js?v=202610231912';
-import { atualizarDeslizador } from './ui.js?v=202610231912';
+import { icone } from './icones.js?v=202610240909';
+import { TEMAS, DESTAQUES_SUGERIDOS, TECLAS_PADRAO } from './preferencias.js?v=202610240909';
+import { CANAIS, PACOTES_SOM } from './audio.js?v=202610240909';
+import { atualizarDeslizador } from './ui.js?v=202610240909';
 
 const ABAS = [
   { id: 'visual', nome: 'Visual', icone: 'olho' },

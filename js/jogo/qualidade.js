@@ -28,6 +28,7 @@ export function criarControleQualidade(escolha, aoMudar) {
   let travadoAte = 0; // depois de descer, não sobe de volta por um tempo
   let fps = 60;
   let tempoTotal = 0;
+  let carenciaAte = 4; // os primeiros segundos (carregamento, shaders) não contam
 
   function mudar(novo) {
     if (novo === nivel) return;
@@ -43,6 +44,12 @@ export function criarControleQualidade(escolha, aoMudar) {
     get fps() { return fps; },
     get automatico() { return auto; },
 
+    /** Ignora a medição por alguns segundos (ex.: depois de montar uma paisagem nova). */
+    carencia(segundos) {
+      carenciaAte = tempoTotal + segundos;
+      acumulado = 0;
+      quadros = 0;
+    },
     /** Chamar a cada quadro com o tempo real do quadro (s), sem limite. */
     medir(dtReal) {
       tempoTotal += dtReal;
@@ -53,7 +60,7 @@ export function criarControleQualidade(escolha, aoMudar) {
       acumulado = 0;
       quadros = 0;
       // Os primeiros segundos têm carregamento e compilação de shaders: não contam
-      if (!auto || tempoTotal < 4) return;
+      if (!auto || tempoTotal < carenciaAte) return;
       const i = NIVEIS.indexOf(nivel);
       if (fps < 48) {
         segundosBons = 0;

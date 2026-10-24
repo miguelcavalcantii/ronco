@@ -5,19 +5,19 @@
  */
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { icone } from '../../nucleo/icones.js?v=202610231912';
-import { carregarEstilo, clamp, movimentoReduzido } from '../../nucleo/util.js?v=202610231912';
-import { CARROS, CATEGORIAS, obterCarro, notas } from '../../jogo/carros.js?v=202610231912';
-import { ACABAMENTOS, RODAS, CORES_RODA } from '../../jogo/carro3d.js?v=202610231912';
-import { criarCarro, temModeloReal } from '../../jogo/modelosReais.js?v=202610231912';
-import { garagem } from '../../jogo/garagemDados.js?v=202610231912';
-import { criarSomDoCarro, PERFIS_MOTOR } from '../../jogo/motorSom.js?v=202610231912';
+import { icone } from '../../nucleo/icones.js?v=202610240909';
+import { carregarEstilo, clamp, movimentoReduzido } from '../../nucleo/util.js?v=202610240909';
+import { CARROS, CATEGORIAS, obterCarro, notas } from '../../jogo/carros.js?v=202610240909';
+import { ACABAMENTOS, RODAS, CORES_RODA } from '../../jogo/carro3d.js?v=202610240909';
+import { criarCarro, temModeloReal } from '../../jogo/modelosReais.js?v=202610240909';
+import { garagem } from '../../jogo/garagemDados.js?v=202610240909';
+import { criarSomDoCarro, PERFIS_MOTOR } from '../../jogo/motorSom.js?v=202610240909';
 
 const CORES = ['#ffd60a', '#00c853', '#1e6bff', '#e10600', '#ff7a18', '#f2f2f2', '#c3c7cc', '#6e7378', '#141516', '#0a6b3a', '#5b2a86', '#22e4ff', '#ff2e97', '#7ad61a', '#8a5a2b'];
 const NOMES_VIDRO = ['Claro', 'Leve', 'Escuro', 'Limusine'];
 
 export async function montar(raiz, { audio, avisar, progresso }) {
-  await carregarEstilo(new URL('../../../css/secoes/garagem.css?v=202610231912', import.meta.url));
+  await carregarEstilo(new URL('../../../css/secoes/garagem.css?v=202610240909', import.meta.url));
 
   raiz.innerHTML = `
     <div class="garagem">

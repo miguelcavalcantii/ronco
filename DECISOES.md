@@ -24,6 +24,15 @@
 - **Níveis medidos offline:** cada perfil foi renderizado em OfflineAudioContext (marcha lenta,
   meio e pé no fundo) e ganhou um `nivel` para todos soarem parecidos, com um limitador por carro
   (picos ficam abaixo de 0,85). A marcha lenta fica 6 a 15 dB abaixo do pé no fundo.
+- **Carros por seções (loft)** (`carroceria.js`, `desenhos.js`): cada carro tem medidas reais
+  aproximadas (comprimento, largura, balanços, roda) e perfis ao longo do comprimento; a seção
+  transversal é uma superelipse. Faróis, grades e lanternas são "colados" na superfície calculada.
+  Modelos 3D reais de marcas só existem no Sketchfab com login (ver MODELOS.md).
+- **Autódromo** (`circuito.js`): curva Catmull-Rom centrípeta fechada por 28 pontos de controle,
+  com a mesma interface do traçado infinito (o `s` cresce volta após volta). Validado em Node:
+  4.289 m (Interlagos tem 4.309), giro de exatamente 360° por volta, sem trechos se cruzando
+  (menor distância entre partes não vizinhas: 66 m) e curva mais fechada com raio de ~19 m.
+  O chão do autódromo é uma malha única cujas alturas vêm da pista (interpolação por distância).
 - **Sem marcas:** os carros são estilizados e não usam logotipos (marcas registradas).
   Na seção Legado não serão usadas fotos, o logotipo oficial, o desenho original do
   capacete nem marcas de patrocinadores: só cores, textos, números e ilustrações próprias.

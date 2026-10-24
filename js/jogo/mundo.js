@@ -4,7 +4,7 @@
  * O mapa de reflexo do carro é gerado a partir do próprio céu.
  */
 import * as THREE from 'three';
-import { criarRuido } from './ruido.js?v=202610231912';
+import { criarRuido } from './ruido.js?v=202610240909';
 
 const RAIO_CEU = 3200;
 const RAIO_MONTANHAS = 2300;
@@ -72,6 +72,8 @@ function criarMontanhas(paisagem, segmentos) {
       const z = Math.cos(a) * raio;
       posicoes.push(x, -160, z, x, h, z);
       const topo = corCamada.clone().lerp(neblina, 0.15);
+      // Picos altos com neve
+      if (paisagem.montanhas.neve && h > altura * escala * 0.55) topo.lerp(new THREE.Color('#f4f7fb'), 0.85);
       cores.push(...neblina.toArray(), ...topo.toArray());
       if (i < segmentos) {
         const k = inicio + i * 2;
@@ -118,6 +120,32 @@ export function criarMundo({ raiz, preset, paisagem }) {
   ceu.frustumCulled = false;
   cena.add(ceu);
   let montanhas = null;
+  // Mar (litoral): plano grande que acompanha a câmera na altura do nível da água
+  const agua = new THREE.Mesh(
+    new THREE.PlaneGeometry(9000, 9000),
+    new THREE.MeshStandardMaterial({ color: '#1f86b8', roughness: 0.12, metalness: 0.25, transparent: true, opacity: 0.93 }),
+  );
+  agua.rotation.x = -Math.PI / 2;
+  agua.visible = false;
+  cena.add(agua);
+  // Estrelas (paisagens noturnas)
+  const estrelas = (() => {
+    const pos = [];
+    for (let i = 0; i < 1400; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const el = Math.asin(0.08 + Math.random() * 0.92);
+      pos.push(Math.cos(a) * Math.cos(el) * 2800, Math.sin(el) * 2800, Math.sin(a) * Math.cos(el) * 2800);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    const pontos = new THREE.Points(g, new THREE.PointsMaterial({ color: '#ffffff', size: 2.2, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.85 }));
+    pontos.visible = false;
+    pontos.frustumCulled = false;
+    pontos.renderOrder = -1;
+    return pontos;
+  })();
+  cena.add(estrelas);
+  let nivelAgua = 0;
   let ambiente = null;
   const pmrem = new THREE.PMREMGenerator(renderizador);
   let paisagemAtual = paisagem;
@@ -136,6 +164,12 @@ export function criarMundo({ raiz, preset, paisagem }) {
     sol.color.set(p.ceu.sol);
     sol.intensity = p.luz.sol;
     refazerMontanhas();
+    agua.visible = Boolean(p.agua);
+    if (p.agua) {
+      agua.material.color.set(p.agua.cor);
+      nivelAgua = p.agua.nivel;
+    }
+    estrelas.visible = Boolean(p.noite);
     // Reflexo do carro: o céu desta paisagem e um chão escuro
     const cenaReflexo = new THREE.Scene();
     cenaReflexo.add(new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), criarMaterialCeu(p, direcaoSol)));
@@ -200,7 +234,9 @@ export function criarMundo({ raiz, preset, paisagem }) {
     aplicarPreset,
     redimensionar,
     /** Céu, montanhas e a sombra do sol acompanham a câmera / o carro. */
-    acompanhar(posCamera, posCarro) {
+    acompanhar(posCamera, posCarro, origemY = 0) {
+      agua.position.set(posCamera.x, nivelAgua - origemY, posCamera.z);
+      estrelas.position.copy(posCamera);
       ceu.position.copy(posCamera);
       montanhas.position.set(posCamera.x, posCamera.y - 40, posCamera.z);
       sol.position.copy(posCarro).addScaledVector(direcaoSol, 120);

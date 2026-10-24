@@ -3,36 +3,41 @@
  * o carro, a física, as câmeras, os controles e o som, e desenha o painel (HUD).
  */
 import * as THREE from 'three';
-import { icone } from '../../nucleo/icones.js?v=202610231912';
-import { carregarEstilo, clamp } from '../../nucleo/util.js?v=202610231912';
-import { luzesDeLargada } from '../../nucleo/ui.js?v=202610231912';
-import { Tracado, MEIA_LARGURA } from '../../jogo/tracado.js?v=202610231912';
-import { criarRuido } from '../../jogo/ruido.js?v=202610231912';
-import { Estrada } from '../../jogo/estrada.js?v=202610231912';
-import { obterPaisagem } from '../../jogo/paisagens.js?v=202610231912';
-import { garagem } from '../../jogo/garagemDados.js?v=202610231912';
-import { criarCarro } from '../../jogo/modelosReais.js?v=202610231912';
-import { criarFisica } from '../../jogo/fisica.js?v=202610231912';
-import { criarControleCamera } from '../../jogo/cameras.js?v=202610231912';
-import { criarEntrada } from '../../jogo/entrada.js?v=202610231912';
-import { criarSomDoCarro } from '../../jogo/motorSom.js?v=202610231912';
-import { criarMundo } from '../../jogo/mundo.js?v=202610231912';
-import { criarControleQualidade } from '../../jogo/qualidade.js?v=202610231912';
+import { icone } from '../../nucleo/icones.js?v=202610240909';
+import { carregarEstilo, clamp } from '../../nucleo/util.js?v=202610240909';
+import { luzesDeLargada } from '../../nucleo/ui.js?v=202610240909';
+import { Tracado, MEIA_LARGURA } from '../../jogo/tracado.js?v=202610240909';
+import { criarRuido } from '../../jogo/ruido.js?v=202610240909';
+import { Estrada } from '../../jogo/estrada.js?v=202610240909';
+import { obterPaisagem, PAISAGENS } from '../../jogo/paisagens.js?v=202610240909';
+import { Circuito, INTERLAGOS } from '../../jogo/circuito.js?v=202610240909';
+import { criarCenarioCircuito } from '../../jogo/cenarioCircuito.js?v=202610240909';
+import { garagem } from '../../jogo/garagemDados.js?v=202610240909';
+import { criarCarro } from '../../jogo/modelosReais.js?v=202610240909';
+import { criarFisica } from '../../jogo/fisica.js?v=202610240909';
+import { criarControleCamera } from '../../jogo/cameras.js?v=202610240909';
+import { criarEntrada } from '../../jogo/entrada.js?v=202610240909';
+import { criarSomDoCarro } from '../../jogo/motorSom.js?v=202610240909';
+import { criarMundo } from '../../jogo/mundo.js?v=202610240909';
+import { criarControleQualidade } from '../../jogo/qualidade.js?v=202610240909';
 
 const DISTANCIA_REBASE = 2500; // origem flutuante: recentra o mundo a cada 2,5 km
 const NOMES_QUALIDADE = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto', ultra: 'Ultra' };
 
 export async function montar(raiz, { audio, preferencias, progresso, avisar, configuracoes, voltar }) {
-  await carregarEstilo(new URL('../../../css/secoes/dirigir.css?v=202610231912', import.meta.url));
+  await carregarEstilo(new URL('../../../css/secoes/dirigir.css?v=202610240909', import.meta.url));
 
   raiz.innerHTML = `
     <div class="jogo" data-jogo>
       <div class="jogo__palco" data-palco></div>
+      <div class="jogo__veu" data-veu></div>
 
       <div class="hud" data-hud>
         <div class="hud__topo">
           <span class="hud__info"><small>Distância</small><strong data-hud-distancia>0,0 km</strong></span>
           <span class="hud__info"><small>Tempo</small><strong data-hud-tempo>0:00</strong></span>
+          <span class="hud__info hud__info--volta" data-hud-volta hidden><small data-volta-titulo>Volta</small><strong data-volta-tempo>0:00.0</strong></span>
+          <span class="hud__info hud__info--volta" data-hud-melhor hidden><small>Melhor</small><strong data-volta-melhor>–</strong></span>
         </div>
         <span class="hud__fps" data-hud-fps hidden></span>
         <div class="painel carbono" aria-hidden="true">
@@ -70,6 +75,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
       </div>
       <div class="jogo__botoes">
         <button type="button" class="botao-icone pilula" data-controle="camera" aria-label="Trocar câmera (C)" title="Trocar câmera (C)">${icone('camera')}</button>
+        <button type="button" class="botao-icone pilula" data-abrir-paisagens aria-label="Trocar paisagem" title="Trocar paisagem">${icone('montanha')}</button>
         <button type="button" class="botao-icone pilula" data-pausar aria-label="Pausar (P ou Esc)" title="Pausar (P ou Esc)">${icone('pausa')}</button>
       </div>
 
@@ -83,6 +89,11 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
             <button type="button" class="botao botao--secundario" data-abrir-config>${icone('engrenagem')}<span>Configurações</span></button>
             <button type="button" class="botao botao--secundario" data-sair>${icone('voltar')}<span>Sair para o menu</span></button>
           </div>
+          <h3 class="pausa__subtitulo" id="pausa-paisagens">Paisagem</h3>
+          <div class="pausa__paisagens" role="group" aria-labelledby="pausa-paisagens">
+            ${PAISAGENS.map((x) => `<button type="button" class="paisagem-botao" data-paisagem="${x.id}" title="${x.descricao}" style="--c1:${x.ceu.topo};--c2:${x.grama[0]};--c3:${x.ceu.horizonte}">
+              <span class="paisagem-botao__previa" aria-hidden="true"></span><span>${x.nome}</span></button>`).join('')}
+          </div>
           <p class="pausa__dica" data-dica-controles></p>
         </div>
       </div>
@@ -94,7 +105,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
 
   /* ---------- Montagem do mundo ---------- */
 
-  const paisagem = obterPaisagem('serra');
+  let paisagem = obterPaisagem(preferencias.get('paisagem') ?? 'serra');
   const carroDados = garagem.carro;
   const ajustes = garagem.ajustesDe(carroDados.id);
   let qualidade;
@@ -108,16 +119,37 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
 
   const mundo = criarMundo({ raiz: palco, preset: qualidade.preset, paisagem });
   const ruido = criarRuido(2024);
-  const tracado = new Tracado(5);
-  tracado.relevo = paisagem.tracado.relevo;
-  tracado.sinuosidade = paisagem.tracado.sinuosidade;
-  const estrada = new Estrada({ cena: mundo.cena, tracado, ruido, paisagem, renderizador: mundo.renderizador, preset: qualidade.preset });
+  // Traçado (estrada infinita ou circuito fechado), estrada em pedaços e cenário fixo do autódromo
+  let tracado;
+  let estrada;
+  let cenario = null;
+  function montarCenario() {
+    if (paisagem.circuito) {
+      tracado = new Circuito(INTERLAGOS);
+    } else {
+      tracado = new Tracado(5 + PAISAGENS.findIndex((x) => x.id === paisagem.id) * 31);
+      tracado.relevo = paisagem.tracado.relevo;
+      tracado.sinuosidade = paisagem.tracado.sinuosidade;
+    }
+    estrada = new Estrada({ cena: mundo.cena, tracado, ruido, paisagem, renderizador: mundo.renderizador, preset: qualidade.preset });
+    cenario = paisagem.circuito ? criarCenarioCircuito({ cena: mundo.cena, circuito: tracado, paisagem }) : null;
+  }
+  montarCenario();
   const carro = await criarCarro(carroDados, { ambiente: mundo.ambiente, ajustes });
   carro.definirSombras(qualidade.preset.sombras);
   mundo.cena.add(carro.grupo);
+  carro.farois(paisagem.noite ? 3 : 1.2);
   const fisica = criarFisica(carroDados, { raioRoda: carro.raioRoda, entreEixos: carro.entreEixos, altura: ajustes.altura });
   fisica.definirCambio(preferencias.get('cambio'));
   const e = fisica.estado;
+  // No autódromo a largada é na Reta dos Boxes, 60 m antes da linha
+  const posicionarLargada = () => {
+    if (paisagem.circuito) {
+      e.s = tracado.comprimento - 60;
+      e.x = 3.2;
+    }
+  };
+  posicionarLargada();
 
   const ponto = {};
   function pontoNaEstrada(s, x, saida) {
@@ -245,7 +277,9 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
     largadaLiberada = false;
     luzes?.cancelar();
     luzes = luzesDeLargada(audio, { intervalo: 0.7 });
+    cenario?.luzes(true);
     luzes.promessa.then((ok) => {
+      cenario?.luzes(false);
       if (ok !== false) largadaLiberada = true;
     });
   }
@@ -285,6 +319,8 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
 
   function recomecar() {
     fisica.reiniciar();
+    posicionarLargada();
+    reiniciarCronometro();
     distanciaSessao = 0;
     tempoSessao = 0;
     cameras.definirModo(cameras.modo);
@@ -304,6 +340,110 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
     if (chave === 'camera') cameras.definirModo(preferencias.get('camera'));
   };
   const pararDePreferencias = preferencias.on('mudou', aoMudarPreferencia);
+
+  /* ---------- Troca de paisagem (com véu suave) ---------- */
+
+  const veu = $('[data-veu]');
+  let trocando = false;
+  function marcarPaisagem() {
+    raiz.querySelectorAll('[data-paisagem]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.paisagem === paisagem.id)));
+  }
+  marcarPaisagem();
+  async function trocarPaisagem(id) {
+    if (trocando || id === paisagem.id) return;
+    trocando = true;
+    audio.tocar('abrir');
+    veu.style.background = obterPaisagem(id).neblina.cor;
+    veu.classList.add('jogo__veu--ativo');
+    await new Promise((r) => setTimeout(r, 450));
+    paisagem = obterPaisagem(id);
+    preferencias.definir('paisagem', id);
+    estrada.destruir();
+    cenario?.destruir();
+    mundo.aplicarPaisagem(paisagem);
+    // O reflexo do carro vem do céu novo
+    carro.grupo.traverse((o) => {
+      if (!o.isMesh) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (m.envMap) { m.envMap = mundo.ambiente; m.needsUpdate = true; }
+      }
+    });
+    carro.farois(paisagem.noite ? 3 : 1.2);
+    montarCenario();
+    fisica.reiniciar();
+    e.s = 160;
+    posicionarLargada();
+    reiniciarCronometro();
+    cameras.definirModo(cameras.modo);
+    estrada.atualizar(e.s, e.s, 999);
+    progresso.registrar('dirigir:paisagem', 1, paisagem.id);
+    marcarPaisagem();
+    elPausa.hidden = true;
+    pausado = false;
+    som?.retomar();
+    ultimoTempo = 0;
+    veu.classList.remove('jogo__veu--ativo');
+    qualidade.carencia(4);
+    trocando = false;
+    largar();
+    mostrarAviso(paisagem.nome);
+  }
+  elPausa.addEventListener('click', (ev) => {
+    const botao = ev.target.closest('[data-paisagem]');
+    if (botao) trocarPaisagem(botao.dataset.paisagem);
+  });
+  $('[data-abrir-paisagens]').addEventListener('click', () => {
+    pausar();
+    raiz.querySelector('[data-paisagem][aria-pressed="true"]')?.focus({ preventScroll: true });
+  });
+
+  /* ---------- Cronômetro do autódromo ---------- */
+
+  const elVolta = $('[data-hud-volta]');
+  const elMelhor = $('[data-hud-melhor]');
+  let voltaAnterior = 0;
+  let tempoVolta = 0;
+  let cronometrando = false;
+  let trechoAtual = '';
+  const formatarVolta = (t) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
+  function reiniciarCronometro() {
+    voltaAnterior = paisagem.circuito ? Math.floor(e.s / tracado.comprimento) : 0;
+    tempoVolta = 0;
+    cronometrando = false;
+    trechoAtual = '';
+    elVolta.hidden = !paisagem.circuito;
+    elMelhor.hidden = !paisagem.circuito;
+    const melhor = progresso.recorde('volta:interlagos');
+    $('[data-volta-melhor]').textContent = melhor ? formatarVolta(melhor) : '–';
+    $('[data-volta-titulo]').textContent = 'Volta';
+    $('[data-volta-tempo]').textContent = '0:00.0';
+  }
+  reiniciarCronometro();
+  function cronometrar(dt) {
+    if (cronometrando && largadaLiberada) tempoVolta += dt;
+    const volta = Math.floor(e.s / tracado.comprimento);
+    if (volta > voltaAnterior) {
+      // Cruzou a linha de chegada
+      if (cronometrando) {
+        const recorde = progresso.definirRecorde('volta:interlagos', tempoVolta, { menorMelhor: true });
+        progresso.registrar('autodromo:volta');
+        progresso.ganharXp(25);
+        avisar({ titulo: `Volta ${volta - 1}: ${formatarVolta(tempoVolta)}`, texto: recorde ? 'Nova melhor volta!' : 'Continue acelerando.', icone: 'bandeira', cor: recorde ? 'var(--a1)' : 'var(--a2)' });
+        if (recorde) $('[data-volta-melhor]').textContent = formatarVolta(tempoVolta);
+        audio.tocar(recorde ? 'conquista' : 'checkpoint');
+      }
+      cronometrando = true;
+      tempoVolta = 0;
+      voltaAnterior = volta;
+    }
+    $('[data-volta-titulo]').textContent = cronometrando ? `Volta ${volta}` : 'Volta';
+    escrever('volta', $('[data-volta-tempo]'), formatarVolta(tempoVolta));
+    const nome = tracado.nomeTrecho(e.s);
+    if (nome !== trechoAtual) {
+      if (trechoAtual) mostrarAviso(nome);
+      trechoAtual = nome;
+    }
+  }
 
   /* ---------- Laço principal ---------- */
 
@@ -344,7 +484,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
     const sAntes = e.s;
     tracado.em(e.s, c);
     const seguro = { ...e };
-    const eventos = fisica.passo(dt, comando, { curvatura: c.curvatura, inclinacao: c.inclinacao, aderencia: 1 });
+    const eventos = fisica.passo(dt, comando, { curvatura: c.curvatura, inclinacao: c.inclinacao, aderencia: paisagem.aderencia ?? 1 });
     // Proteção: se algum número da física ficar inválido, volta ao último estado bom
     if (![e.s, e.x, e.v, e.angulo, e.rpm, e.esterco].every(Number.isFinite)) {
       console.warn('Física inválida neste quadro; estado restaurado.', { ...e }, comando);
@@ -393,7 +533,9 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
       mundo.camera.position.sub(desloc);
       cameras.deslocar(desloc);
     }
-    mundo.acompanhar(mundo.camera.position, posCarro);
+    mundo.acompanhar(mundo.camera.position, posCarro, estrada.origem.y);
+    cenario?.acompanhar();
+    if (paisagem.circuito) cronometrar(dt);
 
     som?.atualizar(dt, {
       rpm: e.rpm,
@@ -450,6 +592,7 @@ export async function montar(raiz, { audio, preferencias, progresso, avisar, con
       entrada.destruir();
       som?.destruir();
       estrada.destruir();
+      cenario?.destruir();
       carro.destruir();
       mundo.destruir();
     },

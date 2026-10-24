@@ -10,7 +10,7 @@
  *                    "pintura": ["paint", "body"], "rodas": ["wheel"] }
  */
 import * as THREE from 'three';
-import { criarCarro3d, FORMAS, ajustesPadrao } from './carro3d.js?v=202610231912';
+import { criarCarro3d, FORMAS, ajustesPadrao } from './carro3d.js?v=202610240909';
 
 const BASE = new URL('../../assets/modelos/', import.meta.url);
 const DECODIFICADOR_DRACO = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/';

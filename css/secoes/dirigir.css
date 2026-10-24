@@ -218,3 +218,30 @@ body.interface-oculta .controles-toque { opacity: 0; pointer-events: none; }
 .pausa__botoes { display: flex; flex-direction: column; gap: 8px; }
 .pausa__botoes .botao { justify-content: flex-start; width: 100%; }
 .pausa__dica { font-size: 0.85rem; color: var(--texto-suave); }
+
+/* ---------- Troca de paisagem ---------- */
+
+.jogo__veu { position: absolute; inset: 0; z-index: 4; opacity: 0; pointer-events: none; transition: opacity 0.45s ease; }
+.jogo__veu--ativo { opacity: 1; pointer-events: auto; }
+
+.pausa__subtitulo { margin-top: 4px; font-size: 1.1rem; font-style: italic; letter-spacing: 0.04em; text-transform: uppercase; }
+.pausa__paisagens { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.paisagem-botao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px;
+  border: 2px solid var(--linha);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: left;
+}
+.paisagem-botao__previa { height: 30px; border-radius: 6px; background: linear-gradient(180deg, var(--c1), var(--c3) 55%, var(--c2) 56%); }
+.paisagem-botao[aria-pressed='true'] { border-color: var(--destaque); }
+.pausa__caixa { max-height: calc(100dvh - 32px); overflow-y: auto; width: min(560px, 100%); }
+
+/* Cronômetro do autódromo */
+.hud__info--volta strong { color: var(--a1); }
